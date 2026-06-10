@@ -1,6 +1,6 @@
 :root {
   color: #1b2430;
-  background: #fbf7f2;
+  background: #f6f3ee;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -29,18 +29,11 @@ select {
 
 .app {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 32px;
-}
-
-.welcome-panel {
-  max-width: 720px;
 }
 
 .eyebrow {
-  margin: 0 0 12px;
-  color: #be3455;
+  margin: 0;
+  color: #c63c5b;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -49,16 +42,253 @@ select {
 
 h1 {
   margin: 0;
-  max-width: 680px;
   color: #151a22;
-  font-size: clamp(2.5rem, 7vw, 5.75rem);
-  line-height: 0.94;
+  font-size: 2.35rem;
+  line-height: 1;
   letter-spacing: 0;
 }
 
-.welcome-panel p:last-child {
-  max-width: 620px;
-  color: #4c5868;
-  font-size: 1.15rem;
-  line-height: 1.65;
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(360px, 0.85fr) minmax(420px, 1.15fr);
+  gap: 28px;
+  padding: 28px;
+}
+
+.builder-panel,
+.preview-panel {
+  min-width: 0;
+}
+
+.builder-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 28px;
+  background: #ffffff;
+  border: 1px solid #e4ddd4;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgb(43 35 27 / 0.08);
+}
+
+.builder-header {
+  display: grid;
+  gap: 10px;
+}
+
+.control-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.control-group {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #ebe4db;
+  border-radius: 8px;
+  background: #fffdf9;
+}
+
+.control-group h2,
+.card-copy h2 {
+  margin: 0;
+  color: #1b2430;
+  letter-spacing: 0;
+}
+
+.control-group h2 {
+  font-size: 1rem;
+}
+
+.control-group p {
+  margin: 6px 0 0;
+  color: #66717f;
+  line-height: 1.45;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #3d4754;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: #6b7280;
+  background: #f6f7f8;
+  border: 1px solid #d9dee6;
+  border-radius: 6px;
+}
+
+.choice-row,
+.template-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.choice-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.template-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choice-row span,
+.template-grid span {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  color: #283240;
+  font-size: 0.9rem;
+  font-weight: 800;
+  background: #f4f8f7;
+  border: 1px solid #cddfdb;
+  border-radius: 6px;
+}
+
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+  background: #17212f;
+  border-radius: 8px;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.preview-header span {
+  color: #b8c8d6;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.card-preview {
+  flex: 1;
+  min-height: 560px;
+  display: grid;
+  align-content: end;
+  gap: 22px;
+  padding: 34px;
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 0.12), transparent 42%),
+    #f9d762;
+  border-radius: 8px;
+  color: #1c2430;
+  position: relative;
+}
+
+.card-ribbon {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  padding: 10px 14px;
+  color: #ffffff;
+  background: #c63c5b;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.photo-placeholder {
+  width: min(58%, 340px);
+  aspect-ratio: 1;
+  margin-left: auto;
+  background:
+    radial-gradient(circle at 35% 30%, #ffffff 0 10%, transparent 11%),
+    linear-gradient(145deg, #55a7a0, #315f79);
+  border: 10px solid rgb(255 255 255 / 0.72);
+  border-radius: 8px;
+  box-shadow: 0 18px 36px rgb(29 36 46 / 0.22);
+}
+
+.card-copy {
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+}
+
+.card-copy p {
+  margin: 0;
+  color: #313b4a;
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.card-copy h2 {
+  max-width: 520px;
+  font-size: 2.8rem;
+  line-height: 0.98;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .card-preview {
+    min-height: 520px;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .builder-panel,
+  .preview-panel {
+    padding: 18px;
+  }
+
+  .field-grid,
+  .choice-row,
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 1.85rem;
+  }
+
+  .card-preview {
+    min-height: 460px;
+    padding: 24px;
+  }
+
+  .card-ribbon {
+    top: 20px;
+    left: 20px;
+  }
+
+  .photo-placeholder {
+    width: min(70%, 260px);
+  }
+
+  .card-copy h2 {
+    font-size: 2.05rem;
+  }
 }
