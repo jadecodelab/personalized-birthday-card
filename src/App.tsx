@@ -1,4 +1,9 @@
+import { useState } from "react";
+
 export default function App() {
+  const [recipientName, setRecipientName] = useState("Snoopy");
+  const previewName = recipientName.trim() || "Birthday Star";
+
   return (
     <main className="app-shell">
       <section className="builder-panel" aria-label="Birthday card builder">
@@ -16,7 +21,13 @@ export default function App() {
             <div className="field-grid">
               <label>
                 Name
-                <input placeholder="Maya" disabled />
+                <input
+                  value={recipientName}
+                  onChange={(event) => setRecipientName(event.target.value)}
+                  placeholder="Maya"
+                  maxLength={40}
+                  autoComplete="name"
+                />
               </label>
               <label>
                 Birthday
@@ -61,7 +72,7 @@ export default function App() {
           <div className="card-ribbon">Happy Birthday</div>
           <div className="photo-placeholder" aria-hidden="true" />
           <div className="card-copy">
-            <p>Dear Maya,</p>
+            <p>Dear {previewName},</p>
             <h2>Wishing you a day full of joy.</h2>
             <p>
               May this year bring bright moments, good people, and the kind of

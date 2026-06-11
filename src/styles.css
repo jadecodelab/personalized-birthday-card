@@ -126,10 +126,21 @@ input {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
-  color: #6b7280;
-  background: #f6f7f8;
+  color: #1f2937;
+  background: #ffffff;
   border: 1px solid #d9dee6;
   border-radius: 6px;
+}
+
+input:focus {
+  border-color: #2f7f7a;
+  box-shadow: 0 0 0 3px rgb(47 127 122 / 0.16);
+  outline: none;
+}
+
+input:disabled {
+  color: #6b7280;
+  background: #f6f7f8;
 }
 
 .choice-row,
