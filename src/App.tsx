@@ -1,8 +1,48 @@
 import { useState } from "react";
 
+const months = [
+  { name: "January", days: 31 },
+  { name: "February", days: 29 },
+  { name: "March", days: 31 },
+  { name: "April", days: 30 },
+  { name: "May", days: 31 },
+  { name: "June", days: 30 },
+  { name: "July", days: 31 },
+  { name: "August", days: 31 },
+  { name: "September", days: 30 },
+  { name: "October", days: 31 },
+  { name: "November", days: 30 },
+  { name: "December", days: 31 },
+];
+
+function formatBirthdayDate(monthIndex: number, day: number) {
+  const month = months[monthIndex];
+
+  if (!month || !day) {
+    return "Choose a birthday date";
+  }
+
+  return `${month.name} ${day}`;
+}
+
 export default function App() {
   const [recipientName, setRecipientName] = useState("Snoopy");
+  const [birthdayMonth, setBirthdayMonth] = useState(7);
+  const [birthdayDay, setBirthdayDay] = useState(18);
   const previewName = recipientName.trim() || "Birthday Star";
+  const availableDays = Array.from(
+    { length: months[birthdayMonth].days },
+    (_, index) => index + 1,
+  );
+  const previewBirthday = formatBirthdayDate(birthdayMonth, birthdayDay);
+
+  function handleBirthdayMonthChange(value: string) {
+    const nextMonth = Number(value);
+    const maxDay = months[nextMonth].days;
+
+    setBirthdayMonth(nextMonth);
+    setBirthdayDay((currentDay) => Math.min(currentDay, maxDay));
+  }
 
   return (
     <main className="app-shell">
@@ -30,8 +70,32 @@ export default function App() {
                 />
               </label>
               <label>
-                Birthday
-                <input type="date" disabled />
+                Month
+                <select
+                  value={birthdayMonth}
+                  onChange={(event) =>
+                    handleBirthdayMonthChange(event.target.value)
+                  }
+                >
+                  {months.map((month, index) => (
+                    <option key={month.name} value={index}>
+                      {month.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Day
+                <select
+                  value={birthdayDay}
+                  onChange={(event) => setBirthdayDay(Number(event.target.value))}
+                >
+                  {availableDays.map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
           </section>
@@ -72,6 +136,7 @@ export default function App() {
           <div className="card-ribbon">Happy Birthday</div>
           <div className="photo-placeholder" aria-hidden="true" />
           <div className="card-copy">
+            <p className="birthday-line">Celebrating {previewBirthday}</p>
             <p>Dear {previewName},</p>
             <h2>Wishing you a day full of joy.</h2>
             <p>
