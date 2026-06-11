@@ -160,7 +160,7 @@ select:disabled {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.choice-row span,
+.choice-button,
 .template-grid span {
   display: grid;
   min-height: 42px;
@@ -171,6 +171,27 @@ select:disabled {
   background: #f4f8f7;
   border: 1px solid #cddfdb;
   border-radius: 6px;
+}
+
+.choice-button {
+  cursor: pointer;
+}
+
+.choice-button:hover {
+  border-color: #2f7f7a;
+  background: #eef8f6;
+}
+
+.choice-button:focus-visible {
+  border-color: #2f7f7a;
+  box-shadow: 0 0 0 3px rgb(47 127 122 / 0.16);
+  outline: none;
+}
+
+.choice-button[aria-pressed="true"] {
+  color: #ffffff;
+  background: #2f7f7a;
+  border-color: #2f7f7a;
 }
 
 .preview-panel {

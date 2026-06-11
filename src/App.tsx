@@ -15,6 +15,27 @@ const months = [
   { name: "December", days: 31 },
 ];
 
+const messagePresets = [
+  {
+    id: "warm",
+    label: "Warm",
+    headline: "Wishing you a day full of joy.",
+    body: "May this year bring bright moments, good people, and the kind of memories you keep smiling about.",
+  },
+  {
+    id: "funny",
+    label: "Funny",
+    headline: "Another year wiser, somehow still this fun.",
+    body: "Hope your birthday is packed with cake, laughs, and absolutely no boring grown-up responsibilities.",
+  },
+  {
+    id: "heartfelt",
+    label: "Heartfelt",
+    headline: "You make life brighter just by being you.",
+    body: "Today is the perfect excuse to celebrate your kindness, your spark, and all the ways you are loved.",
+  },
+];
+
 function formatBirthdayDate(monthIndex: number, day: number) {
   const month = months[monthIndex];
 
@@ -29,7 +50,11 @@ export default function App() {
   const [recipientName, setRecipientName] = useState("Snoopy");
   const [birthdayMonth, setBirthdayMonth] = useState(7);
   const [birthdayDay, setBirthdayDay] = useState(18);
+  const [selectedMessageId, setSelectedMessageId] = useState("warm");
   const previewName = recipientName.trim() || "Birthday Star";
+  const selectedMessage =
+    messagePresets.find((message) => message.id === selectedMessageId) ??
+    messagePresets[0];
   const availableDays = Array.from(
     { length: months[birthdayMonth].days },
     (_, index) => index + 1,
@@ -106,9 +131,17 @@ export default function App() {
               <p>Choose a wish or write a personal note.</p>
             </div>
             <div className="choice-row" aria-label="Message options">
-              <span>Warm</span>
-              <span>Funny</span>
-              <span>Custom</span>
+              {messagePresets.map((message) => (
+                <button
+                  key={message.id}
+                  className="choice-button"
+                  type="button"
+                  aria-pressed={message.id === selectedMessageId}
+                  onClick={() => setSelectedMessageId(message.id)}
+                >
+                  {message.label}
+                </button>
+              ))}
             </div>
           </section>
 
@@ -138,11 +171,8 @@ export default function App() {
           <div className="card-copy">
             <p className="birthday-line">Celebrating {previewBirthday}</p>
             <p>Dear {previewName},</p>
-            <h2>Wishing you a day full of joy.</h2>
-            <p>
-              May this year bring bright moments, good people, and the kind of
-              memories you keep smiling about.
-            </p>
+            <h2>{selectedMessage.headline}</h2>
+            <p>{selectedMessage.body}</p>
           </div>
         </div>
       </aside>
