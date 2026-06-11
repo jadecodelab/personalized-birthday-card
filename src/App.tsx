@@ -51,10 +51,26 @@ export default function App() {
   const [birthdayMonth, setBirthdayMonth] = useState(7);
   const [birthdayDay, setBirthdayDay] = useState(18);
   const [selectedMessageId, setSelectedMessageId] = useState("warm");
+  const [customHeadline, setCustomHeadline] = useState(
+    "A birthday note just for you.",
+  );
+  const [customMessage, setCustomMessage] = useState(
+    "Hope your birthday is full of little surprises, big smiles, and everything that makes you feel celebrated.",
+  );
   const previewName = recipientName.trim() || "Birthday Star";
-  const selectedMessage =
+  const isCustomMessage = selectedMessageId === "custom";
+  const selectedPreset =
     messagePresets.find((message) => message.id === selectedMessageId) ??
     messagePresets[0];
+  const selectedMessage = isCustomMessage
+    ? {
+        headline:
+          customHeadline.trim() || "Add your own birthday card headline.",
+        body:
+          customMessage.trim() ||
+          "Write your own birthday message to see it here.",
+      }
+    : selectedPreset;
   const availableDays = Array.from(
     { length: months[birthdayMonth].days },
     (_, index) => index + 1,
@@ -142,7 +158,38 @@ export default function App() {
                   {message.label}
                 </button>
               ))}
+              <button
+                className="choice-button"
+                type="button"
+                aria-pressed={isCustomMessage}
+                onClick={() => setSelectedMessageId("custom")}
+              >
+                Custom
+              </button>
             </div>
+            {isCustomMessage && (
+              <div className="custom-message-fields">
+                <label>
+                  Custom headline
+                  <input
+                    value={customHeadline}
+                    onChange={(event) => setCustomHeadline(event.target.value)}
+                    maxLength={70}
+                    placeholder="A birthday note just for you."
+                  />
+                </label>
+                <label>
+                  Your message
+                  <textarea
+                    value={customMessage}
+                    onChange={(event) => setCustomMessage(event.target.value)}
+                    maxLength={180}
+                    rows={4}
+                    placeholder="Write your birthday wish here..."
+                  />
+                </label>
+              </div>
+            )}
           </section>
 
           <section className="control-group" aria-labelledby="style-title">

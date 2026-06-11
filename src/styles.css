@@ -123,7 +123,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
@@ -134,16 +135,30 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: #2f7f7a;
   box-shadow: 0 0 0 3px rgb(47 127 122 / 0.16);
   outline: none;
 }
 
 input:disabled,
-select:disabled {
+select:disabled,
+textarea:disabled {
   color: #6b7280;
   background: #f6f7f8;
+}
+
+textarea {
+  min-height: 112px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.custom-message-fields {
+  display: grid;
+  gap: 14px;
+  margin-top: -2px;
 }
 
 .choice-row,
@@ -153,7 +168,7 @@ select:disabled {
 }
 
 .choice-row {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
 }
 
 .template-grid {
