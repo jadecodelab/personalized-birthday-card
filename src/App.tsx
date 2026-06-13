@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ChangeEvent,
+  type PointerEvent,
+} from "react";
 
 const months = [
   { name: "January", days: 31 },
@@ -44,6 +51,53 @@ const cardTemplates = [
 ] as const;
 
 type CardTemplateId = (typeof cardTemplates)[number]["id"];
+type MovableItemId =
+  | "cake"
+  | "flowers"
+  | "balloons"
+  | "gift"
+  | "photo"
+  | "ribbon";
+type MovablePoint = {
+  x: number;
+  y: number;
+};
+type TemplateMovableLayout = Record<MovableItemId, MovablePoint>;
+
+const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout> = {
+  elegant: {
+    cake: { x: 16, y: 28 },
+    flowers: { x: 82, y: 82 },
+    balloons: { x: 82, y: 24 },
+    gift: { x: 52, y: 18 },
+    photo: { x: 70, y: 32 },
+    ribbon: { x: 20, y: 13 },
+  },
+  playful: {
+    cake: { x: 16, y: 28 },
+    flowers: { x: 62, y: 70 },
+    balloons: { x: 86, y: 27 },
+    gift: { x: 46, y: 18 },
+    photo: { x: 66, y: 32 },
+    ribbon: { x: 80, y: 10 },
+  },
+  bold: {
+    cake: { x: 84, y: 31 },
+    flowers: { x: 78, y: 33 },
+    balloons: { x: 17, y: 28 },
+    gift: { x: 28, y: 34 },
+    photo: { x: 67, y: 28 },
+    ribbon: { x: 24, y: 12 },
+  },
+  photo: {
+    cake: { x: 84, y: 34 },
+    flowers: { x: 16, y: 33 },
+    balloons: { x: 84, y: 28 },
+    gift: { x: 35, y: 16 },
+    photo: { x: 70, y: 26 },
+    ribbon: { x: 22, y: 13 },
+  },
+};
 
 function formatBirthdayDate(monthIndex: number, day: number) {
   const month = months[monthIndex];
@@ -53,6 +107,24 @@ function formatBirthdayDate(monthIndex: number, day: number) {
   }
 
   return `${month.name} ${day}`;
+}
+
+function cloneMovableLayouts() {
+  return Object.fromEntries(
+    Object.entries(defaultMovableLayouts).map(([templateId, layout]) => [
+      templateId,
+      Object.fromEntries(
+        Object.entries(layout).map(([itemId, point]) => [
+          itemId,
+          { ...point },
+        ]),
+      ),
+    ]),
+  ) as Record<CardTemplateId, TemplateMovableLayout>;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 export default function App() {
@@ -68,7 +140,17 @@ export default function App() {
     useState<CardTemplateId>("elegant");
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [photoFileName, setPhotoFileName] = useState("");
+  const [movableLayouts, setMovableLayouts] = useState(cloneMovableLayouts);
+  const [activeMovableItemId, setActiveMovableItemId] =
+    useState<MovableItemId | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const previewCardRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef<{
+    itemId: MovableItemId;
+    pointerId: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
   const previewName = recipientName.trim() || "Birthday Star";
   const selectedMessage = {
     headline: messageHeadline.trim() || "Add your own birthday card headline.",
@@ -83,6 +165,7 @@ export default function App() {
     cardTemplates.find((template) => template.id === selectedTemplateId) ??
     cardTemplates[0];
   const cardPreviewClassName = `card-preview card-preview--${selectedTemplate.id}`;
+  const selectedMovableLayout = movableLayouts[selectedTemplate.id];
 
   function handleBirthdayMonthChange(value: string) {
     const nextMonth = Number(value);
@@ -116,6 +199,130 @@ export default function App() {
     if (photoInputRef.current) {
       photoInputRef.current.value = "";
     }
+  }
+
+  function getPreviewPoint(clientX: number, clientY: number) {
+    const previewRect = previewCardRef.current?.getBoundingClientRect();
+
+    if (!previewRect) {
+      return null;
+    }
+
+    return {
+      x: clamp(((clientX - previewRect.left) / previewRect.width) * 100, 4, 96),
+      y: clamp(((clientY - previewRect.top) / previewRect.height) * 100, 4, 96),
+    };
+  }
+
+  function updateMovableItemPosition(
+    templateId: CardTemplateId,
+    itemId: MovableItemId,
+    point: MovablePoint,
+  ) {
+    setMovableLayouts((currentLayouts) => ({
+      ...currentLayouts,
+      [templateId]: {
+        ...currentLayouts[templateId],
+        [itemId]: point,
+      },
+    }));
+  }
+
+  function handleMovablePointerDown(
+    event: PointerEvent<HTMLElement | SVGSVGElement>,
+    itemId: MovableItemId,
+  ) {
+    const pointerPoint = getPreviewPoint(event.clientX, event.clientY);
+
+    if (!pointerPoint) {
+      return;
+    }
+
+    const currentPoint = selectedMovableLayout[itemId];
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStateRef.current = {
+      itemId,
+      pointerId: event.pointerId,
+      offsetX: currentPoint.x - pointerPoint.x,
+      offsetY: currentPoint.y - pointerPoint.y,
+    };
+    setActiveMovableItemId(itemId);
+  }
+
+  function handleMovablePointerMove(
+    event: PointerEvent<HTMLElement | SVGSVGElement>,
+    itemId: MovableItemId,
+  ) {
+    const dragState = dragStateRef.current;
+
+    if (
+      !dragState ||
+      dragState.itemId !== itemId ||
+      dragState.pointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    const pointerPoint = getPreviewPoint(event.clientX, event.clientY);
+
+    if (!pointerPoint) {
+      return;
+    }
+
+    updateMovableItemPosition(selectedTemplate.id, itemId, {
+      x: clamp(pointerPoint.x + dragState.offsetX, 4, 96),
+      y: clamp(pointerPoint.y + dragState.offsetY, 4, 96),
+    });
+  }
+
+  function handleMovablePointerEnd(
+    event: PointerEvent<HTMLElement | SVGSVGElement>,
+    itemId: MovableItemId,
+  ) {
+    const dragState = dragStateRef.current;
+
+    if (
+      dragState?.itemId === itemId &&
+      dragState.pointerId === event.pointerId
+    ) {
+      dragStateRef.current = null;
+      setActiveMovableItemId(null);
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function handleResetMovableLayout() {
+    setMovableLayouts((currentLayouts) => ({
+      ...currentLayouts,
+      [selectedTemplate.id]: {
+        cake: { ...defaultMovableLayouts[selectedTemplate.id].cake },
+        flowers: { ...defaultMovableLayouts[selectedTemplate.id].flowers },
+        balloons: { ...defaultMovableLayouts[selectedTemplate.id].balloons },
+        gift: { ...defaultMovableLayouts[selectedTemplate.id].gift },
+        photo: { ...defaultMovableLayouts[selectedTemplate.id].photo },
+        ribbon: { ...defaultMovableLayouts[selectedTemplate.id].ribbon },
+      },
+    }));
+  }
+
+  function getMovableItemStyle(itemId: MovableItemId) {
+    const point = selectedMovableLayout[itemId];
+
+    return {
+      "--item-x": `${point.x}%`,
+      "--item-y": `${point.y}%`,
+    } as CSSProperties;
+  }
+
+  function getMovableItemClassName(baseClassName: string, itemId: MovableItemId) {
+    return `${baseClassName} movable-card-item ${
+      activeMovableItemId === itemId ? "is-dragging" : ""
+    }`;
   }
 
   useEffect(() => {
@@ -281,9 +488,18 @@ export default function App() {
       <aside className="preview-panel" aria-label="Card preview">
         <div className="preview-header">
           <p className="eyebrow">Live Preview</p>
-          <span>{selectedTemplate.label} template</span>
+          <div className="preview-header-actions">
+            <button
+              className="reset-layout-button"
+              type="button"
+              onClick={handleResetMovableLayout}
+            >
+              Reset layout
+            </button>
+            <span>{selectedTemplate.label} template</span>
+          </div>
         </div>
-        <div className={cardPreviewClassName}>
+        <div ref={previewCardRef} className={cardPreviewClassName}>
           <div className="party-stickers" aria-hidden="true">
             <span className="sticker sticker--one" />
             <span className="sticker sticker--two" />
@@ -291,11 +507,21 @@ export default function App() {
             <span className="sticker sticker--four" />
             <span className="sticker sticker--five" />
           </div>
-          <div className="card-graphics" aria-hidden="true">
+          <div className="card-graphics">
             <svg
-              className="card-graphic card-graphic--cake"
+              className={getMovableItemClassName(
+                "card-graphic card-graphic--cake",
+                "cake",
+              )}
+              style={getMovableItemStyle("cake")}
               viewBox="0 0 140 140"
               role="img"
+              aria-label="Birthday cake sticker"
+              tabIndex={0}
+              onPointerDown={(event) => handleMovablePointerDown(event, "cake")}
+              onPointerMove={(event) => handleMovablePointerMove(event, "cake")}
+              onPointerUp={(event) => handleMovablePointerEnd(event, "cake")}
+              onPointerCancel={(event) => handleMovablePointerEnd(event, "cake")}
             >
               <path
                 d="M24 113c12 8 80 8 92 0"
@@ -324,9 +550,25 @@ export default function App() {
               <circle cx="88" cy="92" r="3" fill="#ffffff" />
             </svg>
             <svg
-              className="card-graphic card-graphic--flowers"
+              className={getMovableItemClassName(
+                "card-graphic card-graphic--flowers",
+                "flowers",
+              )}
+              style={getMovableItemStyle("flowers")}
               viewBox="0 0 150 150"
               role="img"
+              aria-label="Flower sticker"
+              tabIndex={0}
+              onPointerDown={(event) =>
+                handleMovablePointerDown(event, "flowers")
+              }
+              onPointerMove={(event) =>
+                handleMovablePointerMove(event, "flowers")
+              }
+              onPointerUp={(event) => handleMovablePointerEnd(event, "flowers")}
+              onPointerCancel={(event) =>
+                handleMovablePointerEnd(event, "flowers")
+              }
             >
               <path
                 d="M71 134c-2-28 3-50 12-72"
@@ -351,9 +593,25 @@ export default function App() {
               <circle cx="76" cy="54" r="15" fill="#fff7cf" />
             </svg>
             <svg
-              className="card-graphic card-graphic--balloons"
+              className={getMovableItemClassName(
+                "card-graphic card-graphic--balloons",
+                "balloons",
+              )}
+              style={getMovableItemStyle("balloons")}
               viewBox="0 0 140 160"
               role="img"
+              aria-label="Balloon sticker"
+              tabIndex={0}
+              onPointerDown={(event) =>
+                handleMovablePointerDown(event, "balloons")
+              }
+              onPointerMove={(event) =>
+                handleMovablePointerMove(event, "balloons")
+              }
+              onPointerUp={(event) => handleMovablePointerEnd(event, "balloons")}
+              onPointerCancel={(event) =>
+                handleMovablePointerEnd(event, "balloons")
+              }
             >
               <path
                 d="M50 68c-9 30 14 52 2 84M90 72c4 28-16 48-9 80"
@@ -370,9 +628,19 @@ export default function App() {
               <circle cx="82" cy="34" r="7" fill="#ffffff" opacity="0.72" />
             </svg>
             <svg
-              className="card-graphic card-graphic--gift"
+              className={getMovableItemClassName(
+                "card-graphic card-graphic--gift",
+                "gift",
+              )}
+              style={getMovableItemStyle("gift")}
               viewBox="0 0 140 140"
               role="img"
+              aria-label="Gift box sticker"
+              tabIndex={0}
+              onPointerDown={(event) => handleMovablePointerDown(event, "gift")}
+              onPointerMove={(event) => handleMovablePointerMove(event, "gift")}
+              onPointerUp={(event) => handleMovablePointerEnd(event, "gift")}
+              onPointerCancel={(event) => handleMovablePointerEnd(event, "gift")}
             >
               <rect x="29" y="60" width="82" height="56" rx="8" fill="#31c6b4" />
               <rect x="62" y="60" width="16" height="56" fill="#ffcf3f" />
@@ -394,14 +662,43 @@ export default function App() {
               />
             </svg>
           </div>
-          <div className="card-ribbon">Happy Birthday</div>
           <div
-            className={`photo-placeholder ${
+            className={getMovableItemClassName("card-ribbon", "ribbon")}
+            style={getMovableItemStyle("ribbon")}
+            role="img"
+            aria-label="Happy Birthday tag"
+            tabIndex={0}
+            onPointerDown={(event) => handleMovablePointerDown(event, "ribbon")}
+            onPointerMove={(event) => handleMovablePointerMove(event, "ribbon")}
+            onPointerUp={(event) => handleMovablePointerEnd(event, "ribbon")}
+            onPointerCancel={(event) =>
+              handleMovablePointerEnd(event, "ribbon")
+            }
+          >
+            Happy Birthday
+          </div>
+          <div
+            className={getMovableItemClassName(
+              `photo-placeholder ${
               photoPreviewUrl ? "photo-placeholder--filled" : ""
-            }`}
+              }`,
+              "photo",
+            )}
+            style={getMovableItemStyle("photo")}
+            role="img"
+            aria-label="Photo frame"
+            tabIndex={0}
+            onPointerDown={(event) => handleMovablePointerDown(event, "photo")}
+            onPointerMove={(event) => handleMovablePointerMove(event, "photo")}
+            onPointerUp={(event) => handleMovablePointerEnd(event, "photo")}
+            onPointerCancel={(event) => handleMovablePointerEnd(event, "photo")}
           >
             {photoPreviewUrl ? (
-              <img src={photoPreviewUrl} alt={`Uploaded photo for ${previewName}`} />
+              <img
+                src={photoPreviewUrl}
+                alt={`Uploaded photo for ${previewName}`}
+                draggable={false}
+              />
             ) : (
               <span>Photo</span>
             )}
