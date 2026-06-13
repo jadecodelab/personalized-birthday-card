@@ -70,7 +70,7 @@ const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout> = {
     flowers: { x: 82, y: 82 },
     balloons: { x: 82, y: 24 },
     gift: { x: 52, y: 18 },
-    photo: { x: 70, y: 32 },
+    photo: { x: 60, y: 31 },
     ribbon: { x: 20, y: 13 },
   },
   playful: {
@@ -78,7 +78,7 @@ const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout> = {
     flowers: { x: 62, y: 70 },
     balloons: { x: 86, y: 27 },
     gift: { x: 46, y: 18 },
-    photo: { x: 66, y: 32 },
+    photo: { x: 60, y: 31 },
     ribbon: { x: 80, y: 10 },
   },
   bold: {
@@ -86,7 +86,7 @@ const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout> = {
     flowers: { x: 78, y: 33 },
     balloons: { x: 17, y: 28 },
     gift: { x: 28, y: 34 },
-    photo: { x: 67, y: 28 },
+    photo: { x: 60, y: 28 },
     ribbon: { x: 24, y: 12 },
   },
   photo: {
@@ -94,7 +94,7 @@ const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout> = {
     flowers: { x: 16, y: 33 },
     balloons: { x: 84, y: 28 },
     gift: { x: 35, y: 16 },
-    photo: { x: 70, y: 26 },
+    photo: { x: 60, y: 26 },
     ribbon: { x: 22, y: 13 },
   },
 };
@@ -127,6 +127,151 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function getSafeFileName(name: string) {
+  return (name.trim() || "birthday-card")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function getDocumentStyleText() {
+  return Array.from(document.styleSheets)
+    .map((styleSheet) => {
+      try {
+        return Array.from(styleSheet.cssRules)
+          .map((rule) => rule.cssText)
+          .join("\n");
+      } catch {
+        return "";
+      }
+    })
+    .join("\n");
+}
+
+function readBlobAsDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function inlineExportImages(cardClone: HTMLElement) {
+  const images = Array.from(cardClone.querySelectorAll("img"));
+
+  await Promise.all(
+    images.map(async (image) => {
+      if (!image.src || image.src.startsWith("data:")) {
+        return;
+      }
+
+      const response = await fetch(image.src);
+      const imageBlob = await response.blob();
+
+      image.src = await readBlobAsDataUrl(imageBlob);
+    }),
+  );
+}
+
+function escapeStyleText(styleText: string) {
+  return styleText.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+}
+
+function loadImage(source: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not render the card image."));
+    image.src = source;
+  });
+}
+
+function canvasToPngBlob(canvas: HTMLCanvasElement) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Could not create the card PNG."));
+        return;
+      }
+
+      resolve(blob);
+    }, "image/png");
+  });
+}
+
+async function createCardPngBlob(cardElement: HTMLElement) {
+  const cardRect = cardElement.getBoundingClientRect();
+  const exportWidth = Math.ceil(cardRect.width);
+  const exportHeight = Math.ceil(cardRect.height);
+  const cardClone = cardElement.cloneNode(true) as HTMLElement;
+  const photoElement = cardElement.querySelector(".photo-placeholder");
+  const photoRect = photoElement?.getBoundingClientRect();
+
+  cardClone.classList.add("card-preview--exporting");
+  cardClone.querySelectorAll(".is-dragging").forEach((element) => {
+    element.classList.remove("is-dragging");
+  });
+  cardClone.style.width = `${exportWidth}px`;
+  cardClone.style.height = `${exportHeight}px`;
+
+  if (photoRect) {
+    cardClone.style.setProperty("--photo-size", `${Math.round(photoRect.width)}px`);
+    cardClone.style.setProperty(
+      "--media-height",
+      `${Math.round(photoRect.width / 0.92)}px`,
+    );
+  }
+
+  await inlineExportImages(cardClone);
+
+  const styleText = escapeStyleText(getDocumentStyleText());
+  const serializedCard = new XMLSerializer().serializeToString(cardClone);
+  const svgMarkup = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${exportWidth}" height="${exportHeight}" viewBox="0 0 ${exportWidth} ${exportHeight}">
+      <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+          <style>${styleText}</style>
+          ${serializedCard}
+        </div>
+      </foreignObject>
+    </svg>
+  `;
+  const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    svgMarkup,
+  )}`;
+
+  const image = await loadImage(svgUrl);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  const exportScale = 2;
+
+  if (!context) {
+    throw new Error("Could not create the card canvas.");
+  }
+
+  canvas.width = exportWidth * exportScale;
+  canvas.height = exportHeight * exportScale;
+  context.scale(exportScale, exportScale);
+  context.drawImage(image, 0, 0, exportWidth, exportHeight);
+
+  return await canvasToPngBlob(canvas);
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const downloadUrl = URL.createObjectURL(blob);
+  const downloadLink = document.createElement("a");
+
+  downloadLink.href = downloadUrl;
+  downloadLink.download = fileName;
+  document.body.append(downloadLink);
+  downloadLink.click();
+  downloadLink.remove();
+  URL.revokeObjectURL(downloadUrl);
+}
+
 export default function App() {
   const [recipientName, setRecipientName] = useState("Snoopy");
   const [birthdayMonth, setBirthdayMonth] = useState(7);
@@ -143,6 +288,8 @@ export default function App() {
   const [movableLayouts, setMovableLayouts] = useState(cloneMovableLayouts);
   const [activeMovableItemId, setActiveMovableItemId] =
     useState<MovableItemId | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportStatus, setExportStatus] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const previewCardRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<{
@@ -166,6 +313,7 @@ export default function App() {
     cardTemplates[0];
   const cardPreviewClassName = `card-preview card-preview--${selectedTemplate.id}`;
   const selectedMovableLayout = movableLayouts[selectedTemplate.id];
+  const cardFileName = `${getSafeFileName(previewName)}-birthday-card.png`;
 
   function handleBirthdayMonthChange(value: string) {
     const nextMonth = Number(value);
@@ -323,6 +471,63 @@ export default function App() {
     return `${baseClassName} movable-card-item ${
       activeMovableItemId === itemId ? "is-dragging" : ""
     }`;
+  }
+
+  async function getCardPngBlob() {
+    if (!previewCardRef.current) {
+      throw new Error("The card preview is not ready yet.");
+    }
+
+    return await createCardPngBlob(previewCardRef.current);
+  }
+
+  async function handleDownloadCard() {
+    setIsExporting(true);
+    setExportStatus("");
+
+    try {
+      const cardBlob = await getCardPngBlob();
+
+      downloadBlob(cardBlob, cardFileName);
+      setExportStatus("Card downloaded.");
+    } catch {
+      setExportStatus("Download did not work. Try again after the preview loads.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function handleShareCard() {
+    setIsExporting(true);
+    setExportStatus("");
+
+    try {
+      const cardBlob = await getCardPngBlob();
+      const cardFile = new File([cardBlob], cardFileName, {
+        type: "image/png",
+      });
+      const shareData = {
+        files: [cardFile],
+        title: `Birthday card for ${previewName}`,
+        text: `A birthday card for ${previewName}`,
+      };
+      const shareNavigator = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean;
+      };
+
+      if (shareNavigator.share && shareNavigator.canShare?.(shareData)) {
+        await shareNavigator.share(shareData);
+        setExportStatus("Share sheet opened.");
+        return;
+      }
+
+      downloadBlob(cardBlob, cardFileName);
+      setExportStatus("Sharing is not available here, so the card downloaded.");
+    } catch {
+      setExportStatus("Share did not work. Try downloading the card instead.");
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   useEffect(() => {
@@ -490,8 +695,25 @@ export default function App() {
           <p className="eyebrow">Live Preview</p>
           <div className="preview-header-actions">
             <button
+              className="export-button"
+              type="button"
+              disabled={isExporting}
+              onClick={handleDownloadCard}
+            >
+              Download
+            </button>
+            <button
+              className="export-button"
+              type="button"
+              disabled={isExporting}
+              onClick={handleShareCard}
+            >
+              Share
+            </button>
+            <button
               className="reset-layout-button"
               type="button"
+              disabled={isExporting}
               onClick={handleResetMovableLayout}
             >
               Reset layout
@@ -499,6 +721,11 @@ export default function App() {
             <span>{selectedTemplate.label} template</span>
           </div>
         </div>
+        {exportStatus && (
+          <p className="export-status" role="status">
+            {exportStatus}
+          </p>
+        )}
         <div ref={previewCardRef} className={cardPreviewClassName}>
           <div className="party-stickers" aria-hidden="true">
             <span className="sticker sticker--one" />

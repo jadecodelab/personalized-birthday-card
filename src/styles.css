@@ -324,6 +324,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .preview-header-actions {
@@ -331,6 +332,7 @@ textarea {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .preview-header span {
@@ -339,6 +341,7 @@ textarea {
   font-weight: 700;
 }
 
+.export-button,
 .reset-layout-button {
   min-height: 34px;
   padding: 7px 10px;
@@ -351,11 +354,36 @@ textarea {
   font-weight: 800;
 }
 
+.export-button {
+  background: #c92966;
+  border-color: #c92966;
+}
+
+.export-button:disabled,
+.reset-layout-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.export-button:hover:not(:disabled),
+.export-button:focus-visible:not(:disabled) {
+  background: #e23678;
+  border-color: #e23678;
+  outline: none;
+}
+
 .reset-layout-button:hover,
 .reset-layout-button:focus-visible {
   background: rgb(255 255 255 / 0.2);
   border-color: rgb(255 255 255 / 0.48);
   outline: none;
+}
+
+.export-status {
+  margin: -6px 0 0;
+  color: #f4d5e8;
+  font-size: 0.84rem;
+  font-weight: 700;
 }
 
 .card-preview {
@@ -372,8 +400,12 @@ textarea {
   --sticker-c: #ff6b94;
   --media-height: clamp(220px, 30vw, 300px);
   --photo-size: calc(var(--media-height) * 0.92);
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 9 / 16;
   flex: 0 0 auto;
   min-height: 0;
+  margin: 0 auto;
   display: grid;
   grid-template-rows: var(--media-height) auto;
   align-content: start;
@@ -387,6 +419,13 @@ textarea {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+}
+
+.card-preview--exporting .movable-card-item,
+.card-preview--exporting .movable-card-item:hover,
+.card-preview--exporting .movable-card-item:focus-visible {
+  cursor: default;
+  outline: none;
 }
 
 .card-preview--playful {
