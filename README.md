@@ -6,15 +6,19 @@ Create customized digital birthday cards with photos, stickers, themes, and pers
 
 ## 📸 Screenshots
 
-### Customzie
+### Card Editor
 
-![Custom](./screenshots/customize.jpg)
+<p align="center">
+  <img src="./screenshots/editor.png" alt="Editor" width="350">
+</p>
 
 ### Birthday Card Preview
 
-![Sweet](./screenshots/sweet.jpg)
-![PopArt](./screenshots/popart.jpg)
-![Confetti](./screenshots/confetti.jpg)
+<p align="center">
+  <img src="./screenshots/sweet.jpg" alt="Sweet Theme" width="250">
+  <img src="./screenshots/popart.jpg" alt="Pop Art Theme" width="250">
+  <img src="./screenshots/confetti.jpg" alt="Confetti Theme" width="250">
+</p>
 
 ## 📖 About
 
