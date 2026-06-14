@@ -77,6 +77,127 @@ h1 {
   gap: 10px;
 }
 
+.wizard-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.wizard-progress {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.wizard-progress-item {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  color: #576273;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.wizard-progress-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: calc(50% + 11px);
+  width: calc(100% - 22px);
+  height: 2px;
+  background: #ffd0df;
+}
+
+.wizard-progress-item.is-filled:not(:last-child)::after {
+  background: #b91f55;
+}
+
+.wizard-dot {
+  position: relative;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  border: 3px solid #ffd0df;
+  border-radius: 50%;
+}
+
+.wizard-progress-item.is-filled .wizard-dot {
+  background: #b91f55;
+  border-color: #b91f55;
+}
+
+.wizard-progress-item[aria-current="step"] {
+  color: #b91f55;
+}
+
+.wizard-step-label {
+  overflow-wrap: anywhere;
+}
+
+.wizard-navigation {
+  display: grid;
+  grid-template-columns: minmax(96px, 1fr) auto minmax(96px, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.wizard-navigation span {
+  color: #6b556d;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.wizard-next-button {
+  min-height: 42px;
+  display: inline-grid;
+  place-items: center;
+  padding: 10px 14px;
+  color: #ffffff;
+  background: #b91f55;
+  border: 1px solid #b91f55;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.wizard-next-button:hover,
+.wizard-next-button:focus-visible {
+  background: #d82768;
+  border-color: #d82768;
+  box-shadow: 0 10px 24px rgb(216 39 104 / 0.12);
+  outline: none;
+}
+
+.wizard-inline-actions,
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.download-actions .export-button {
+  min-height: 42px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+}
+
+.wizard-export-status {
+  margin: -4px 0 0;
+  color: #6d5870;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .control-stack {
   display: grid;
   gap: 18px;
@@ -211,6 +332,12 @@ textarea {
   border-color: #d82768;
   box-shadow: 0 0 0 3px rgb(216 39 104 / 0.16);
   outline: none;
+}
+
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  box-shadow: none;
 }
 
 .photo-file-name {
@@ -398,7 +525,7 @@ textarea {
   --sticker-a: #ffcf3f;
   --sticker-b: #31c6b4;
   --sticker-c: #ff6b94;
-  --media-height: clamp(220px, 30vw, 300px);
+  --media-height: clamp(200px, 28vw, 270px);
   --photo-size: calc(var(--media-height) * 0.92);
   width: 100%;
   max-width: 400px;
@@ -407,10 +534,10 @@ textarea {
   min-height: 0;
   margin: 0 auto;
   display: grid;
-  grid-template-rows: var(--media-height) auto;
+  grid-template-rows: var(--media-height) minmax(0, 1fr);
   align-content: start;
-  gap: 22px;
-  padding: 34px;
+  gap: 18px;
+  padding: 30px 34px 44px;
   background:
     linear-gradient(160deg, rgb(255 255 255 / 0.5), transparent 42%),
     var(--card-surface);
@@ -470,7 +597,7 @@ textarea {
 
 .card-preview--elegant {
   grid-template-columns: minmax(0, 1fr) minmax(170px, 0.56fr);
-  grid-template-rows: var(--media-height) auto;
+  grid-template-rows: var(--media-height) minmax(0, 1fr);
   background:
     radial-gradient(circle at 86% 18%, rgb(255 175 204 / 0.38) 0 12%, transparent 12.5%),
     radial-gradient(circle at 16% 78%, rgb(141 215 255 / 0.35) 0 9%, transparent 9.5%),
@@ -530,9 +657,9 @@ textarea {
 
 .card-preview--playful {
   grid-template-columns: minmax(0, 1fr) minmax(190px, 0.72fr);
-  grid-template-rows: var(--media-height) auto;
+  grid-template-rows: var(--media-height) minmax(0, 1fr);
   align-content: start;
-  gap: 18px 24px;
+  gap: 16px 24px;
   background:
     radial-gradient(circle at 14% 18%, rgb(255 255 255 / 0.8) 0 3%, transparent 3.3%),
     radial-gradient(circle at 80% 24%, rgb(255 107 148 / 0.34) 0 4%, transparent 4.4%),
@@ -597,8 +724,8 @@ textarea {
 }
 
 .card-preview--bold {
-  grid-template-rows: var(--media-height) auto;
-  gap: 20px;
+  grid-template-rows: var(--media-height) minmax(0, 1fr);
+  gap: 16px;
   border: 4px solid #fff9f2;
   background:
     repeating-linear-gradient(
@@ -674,9 +801,9 @@ textarea {
 }
 
 .card-preview--photo {
-  grid-template-rows: var(--media-height) auto;
-  gap: 18px;
-  padding: 24px;
+  grid-template-rows: var(--media-height) minmax(0, 1fr);
+  gap: 16px;
+  padding: 24px 24px 44px;
   background:
     linear-gradient(180deg, transparent 0 56%, rgb(255 255 255 / 0.72) 56%),
     var(--card-surface);
@@ -1042,6 +1169,7 @@ textarea {
   position: relative;
   z-index: 1;
   display: grid;
+  align-self: end;
   gap: 12px;
   max-width: 520px;
 }
@@ -1088,7 +1216,7 @@ textarea {
   }
 
   .card-preview {
-    --media-height: clamp(210px, 44vw, 280px);
+    --media-height: clamp(190px, 40vw, 260px);
     min-height: 0;
   }
 }
@@ -1110,6 +1238,41 @@ textarea {
 
   .control-stack {
     gap: 14px;
+  }
+
+  .wizard-progress {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .wizard-progress-item {
+    gap: 6px;
+    font-size: 0.62rem;
+  }
+
+  .wizard-dot {
+    width: 20px;
+    height: 20px;
+    border-width: 3px;
+  }
+
+  .wizard-progress-item:not(:last-child)::after {
+    top: 9px;
+    left: calc(50% + 10px);
+    width: calc(100% - 20px);
+  }
+
+  .wizard-navigation {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .wizard-navigation span {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .wizard-navigation button {
+    width: 100%;
   }
 
   .control-group {
@@ -1160,11 +1323,12 @@ textarea {
   }
 
   .card-preview {
-    --media-height: clamp(178px, 55vw, 230px);
+    --media-height: clamp(150px, 48vw, 198px);
     min-height: 0;
     max-width: 400px;
-    padding: clamp(16px, 5vw, 24px);
-    gap: clamp(14px, 4vw, 18px);
+    padding: clamp(16px, 5vw, 22px) clamp(16px, 5vw, 22px)
+      clamp(30px, 8vw, 36px);
+    gap: clamp(10px, 3vw, 14px);
   }
 
   .card-ribbon {
@@ -1200,8 +1364,8 @@ textarea {
 
   .card-preview--playful {
     grid-template-columns: 1fr;
-    grid-template-rows: var(--media-height) auto;
-    gap: 18px;
+    grid-template-rows: var(--media-height) minmax(0, 1fr);
+    gap: 12px;
   }
 
   .card-preview--playful .photo-placeholder {
@@ -1218,8 +1382,8 @@ textarea {
   }
 
   .card-preview--photo {
-    grid-template-rows: var(--media-height) auto;
-    padding: 18px;
+    grid-template-rows: var(--media-height) minmax(0, 1fr);
+    padding: 18px 18px 32px;
   }
 
   .card-preview--photo .card-ribbon {
@@ -1245,7 +1409,7 @@ textarea {
   }
 
   .card-copy h2 {
-    font-size: clamp(1.55rem, 8.4vw, 2.05rem);
+    font-size: clamp(1.35rem, 7vw, 1.72rem);
     line-height: 1;
   }
 
@@ -1254,12 +1418,23 @@ textarea {
   }
 
   .card-copy p {
-    font-size: 0.88rem;
-    line-height: 1.45;
+    font-size: 0.82rem;
+    line-height: 1.38;
   }
 
   .card-copy .birthday-line {
     padding: 7px 9px;
-    font-size: 0.68rem;
+    font-size: 0.64rem;
+  }
+
+  .card-preview--elegant .card-copy,
+  .card-preview--bold .card-copy,
+  .card-preview--photo .card-copy {
+    padding: 16px;
+  }
+
+  .card-preview--bold .card-copy h2 {
+    font-size: clamp(1.25rem, 6.4vw, 1.58rem);
+    line-height: 0.98;
   }
 }

@@ -176,9 +176,43 @@ Related commits:
 
 The next phase is focused on making the app feel more guided and more magical.
 
+### June 14, 2026: Guided Builder Wizard
+
+The first polish feature in this phase was turning the builder into a guided wizard.
+
+Before this change, the left side of the app showed all controls at once. It worked, but it could feel like a lot to take in. I wanted the experience to feel more intentional, so I organized the builder into five steps: Recipient, Message, Photo, Customize, and Download.
+
+The live preview still stays visible, which is important because users should see the card respond as they make choices. The change is not about hiding the card. It is about making the editing process feel calmer and easier to follow.
+
+What changed:
+
+- Added a step progress indicator.
+- Added Back and Next navigation.
+- Moved the existing controls into focused wizard steps.
+- Added a final Download step with download and share actions.
+- Refined the progress indicator into a simple dot timeline.
+- Tightened the small-screen card layout so longer messages stay inside the card frame.
+- Standardized the message area's bottom spacing across card styles.
+- Kept the existing live preview, templates, photo upload, draggable layout, and export behavior working.
+
+What I learned:
+
+- A better interface is not always about adding more features.
+- Sometimes the biggest improvement is reorganizing what already works.
+- A guided flow can make a creative tool feel less overwhelming.
+
+How I tested it:
+
+- Ran the production build.
+- Clicked through all five steps in the browser.
+- Checked the layout on desktop and mobile-sized viewports.
+- Tested the longer Heartfelt message on Sweet and Pop Art templates.
+- Confirmed the page did not create horizontal overflow.
+
+Related commit: `feat: add guided builder wizard`
+
 The main ideas are:
 
-- Turn the editor into a guided step-by-step flow.
 - Add a recipient-facing envelope opening animation.
 - Add confetti or floating balloon animations.
 - Create shareable card links for cards without uploaded photos.

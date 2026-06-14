@@ -50,7 +50,16 @@ const cardTemplates = [
   { id: "photo", label: "Photo Fun" },
 ] as const;
 
+const wizardSteps = [
+  { id: "recipient", label: "Recipient" },
+  { id: "message", label: "Message" },
+  { id: "photo", label: "Photo" },
+  { id: "customize", label: "Customize" },
+  { id: "download", label: "Download" },
+] as const;
+
 type CardTemplateId = (typeof cardTemplates)[number]["id"];
+type WizardStepId = (typeof wizardSteps)[number]["id"];
 type MovableItemId =
   | "cake"
   | "flowers"
@@ -290,6 +299,8 @@ export default function App() {
     useState<MovableItemId | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState("");
+  const [currentWizardStepId, setCurrentWizardStepId] =
+    useState<WizardStepId>("recipient");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const previewCardRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<{
@@ -314,6 +325,12 @@ export default function App() {
   const cardPreviewClassName = `card-preview card-preview--${selectedTemplate.id}`;
   const selectedMovableLayout = movableLayouts[selectedTemplate.id];
   const cardFileName = `${getSafeFileName(previewName)}-birthday-card.png`;
+  const currentWizardStepIndex = wizardSteps.findIndex(
+    (step) => step.id === currentWizardStepId,
+  );
+  const currentWizardStep = wizardSteps[currentWizardStepIndex] ?? wizardSteps[0];
+  const isFirstWizardStep = currentWizardStepIndex === 0;
+  const isLastWizardStep = currentWizardStepIndex === wizardSteps.length - 1;
 
   function handleBirthdayMonthChange(value: string) {
     const nextMonth = Number(value);
@@ -473,6 +490,22 @@ export default function App() {
     }`;
   }
 
+  function handlePreviousWizardStep() {
+    if (isFirstWizardStep) {
+      return;
+    }
+
+    setCurrentWizardStepId(wizardSteps[currentWizardStepIndex - 1].id);
+  }
+
+  function handleNextWizardStep() {
+    if (isLastWizardStep) {
+      return;
+    }
+
+    setCurrentWizardStepId(wizardSteps[currentWizardStepIndex + 1].id);
+  }
+
   async function getCardPngBlob() {
     if (!previewCardRef.current) {
       throw new Error("The card preview is not ready yet.");
@@ -546,147 +579,255 @@ export default function App() {
           <h1>Birthday Card Builder</h1>
         </div>
 
-        <div className="control-stack">
-          <section className="control-group" aria-labelledby="recipient-title">
-            <div>
-              <h2 id="recipient-title">Recipient</h2>
-              <p>Name and birthday details for the card.</p>
-            </div>
-            <div className="field-grid">
-              <label>
-                Name
-                <input
-                  value={recipientName}
-                  onChange={(event) => setRecipientName(event.target.value)}
-                  placeholder="Maya"
-                  maxLength={40}
-                  autoComplete="name"
-                />
-              </label>
-              <label>
-                Month
-                <select
-                  value={birthdayMonth}
-                  onChange={(event) =>
-                    handleBirthdayMonthChange(event.target.value)
-                  }
+        <div className="wizard-shell">
+          <ol className="wizard-progress" aria-label="Birthday card steps">
+            {wizardSteps.map((step, index) => {
+              const isCurrentStep = step.id === currentWizardStep.id;
+              const isFinishedStep = index < currentWizardStepIndex;
+
+              return (
+                <li
+                  key={step.id}
+                  className={`wizard-progress-item ${
+                    isCurrentStep || isFinishedStep ? "is-filled" : ""
+                  }`}
+                  aria-current={isCurrentStep ? "step" : undefined}
                 >
-                  {months.map((month, index) => (
-                    <option key={month.name} value={index}>
-                      {month.name}
-                    </option>
+                  <span className="wizard-dot" aria-hidden="true" />
+                  <span className="wizard-step-label">
+                    {index + 1}. {step.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+
+          <div className="control-stack">
+            {currentWizardStep.id === "recipient" && (
+              <section className="control-group" aria-labelledby="recipient-title">
+                <div>
+                  <h2 id="recipient-title">Recipient</h2>
+                  <p>Name and birthday details for the card.</p>
+                </div>
+                <div className="field-grid">
+                  <label>
+                    Name
+                    <input
+                      value={recipientName}
+                      onChange={(event) => setRecipientName(event.target.value)}
+                      placeholder="Maya"
+                      maxLength={40}
+                      autoComplete="name"
+                    />
+                  </label>
+                  <label>
+                    Month
+                    <select
+                      value={birthdayMonth}
+                      onChange={(event) =>
+                        handleBirthdayMonthChange(event.target.value)
+                      }
+                    >
+                      {months.map((month, index) => (
+                        <option key={month.name} value={index}>
+                          {month.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Day
+                    <select
+                      value={birthdayDay}
+                      onChange={(event) =>
+                        setBirthdayDay(Number(event.target.value))
+                      }
+                    >
+                      {availableDays.map((day) => (
+                        <option key={day} value={day}>
+                          {day}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {currentWizardStep.id === "message" && (
+              <section className="control-group" aria-labelledby="message-title">
+                <div>
+                  <h2 id="message-title">Message</h2>
+                  <p>Pick a starter wish, then edit it for any card style.</p>
+                </div>
+                <div className="choice-row" aria-label="Message options">
+                  {messagePresets.map((message) => (
+                    <button
+                      key={message.id}
+                      className="choice-button"
+                      type="button"
+                      aria-pressed={message.id === selectedMessageId}
+                      onClick={() => handleMessagePresetSelect(message)}
+                    >
+                      {message.label}
+                    </button>
                   ))}
-                </select>
-              </label>
-              <label>
-                Day
-                <select
-                  value={birthdayDay}
-                  onChange={(event) => setBirthdayDay(Number(event.target.value))}
-                >
-                  {availableDays.map((day) => (
-                    <option key={day} value={day}>
-                      {day}
-                    </option>
+                </div>
+                <div className="message-edit-fields">
+                  <label>
+                    Headline
+                    <input
+                      value={messageHeadline}
+                      onChange={(event) => setMessageHeadline(event.target.value)}
+                      maxLength={70}
+                      placeholder="A birthday note just for you."
+                    />
+                  </label>
+                  <label>
+                    Message
+                    <textarea
+                      value={messageBody}
+                      onChange={(event) => setMessageBody(event.target.value)}
+                      maxLength={180}
+                      rows={4}
+                      placeholder="Write your birthday wish here..."
+                    />
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {currentWizardStep.id === "photo" && (
+              <section className="control-group" aria-labelledby="photo-title">
+                <div>
+                  <h2 id="photo-title">Photo</h2>
+                  <p>Add a favorite photo to the card.</p>
+                </div>
+                <div className="photo-actions">
+                  <label className="upload-button">
+                    Upload photo
+                    <input
+                      ref={photoInputRef}
+                      className="visually-hidden"
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                    />
+                  </label>
+                  {photoPreviewUrl && (
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={handleRemovePhoto}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {photoFileName && (
+                  <p className="photo-file-name">{photoFileName}</p>
+                )}
+              </section>
+            )}
+
+            {currentWizardStep.id === "customize" && (
+              <section className="control-group" aria-labelledby="style-title">
+                <div>
+                  <h2 id="style-title">Customize</h2>
+                  <p>Pick the visual direction and arrange the card preview.</p>
+                </div>
+                <div className="template-grid" aria-label="Template options">
+                  {cardTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      className="template-button"
+                      type="button"
+                      aria-pressed={template.id === selectedTemplateId}
+                      onClick={() => setSelectedTemplateId(template.id)}
+                    >
+                      <span
+                        className={`template-swatch template-swatch--${template.id}`}
+                        aria-hidden="true"
+                      />
+                      <span>{template.label}</span>
+                    </button>
                   ))}
-                </select>
-              </label>
-            </div>
-          </section>
+                </div>
+                <div className="wizard-inline-actions">
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={handleResetMovableLayout}
+                  >
+                    Reset layout
+                  </button>
+                </div>
+              </section>
+            )}
 
-          <section className="control-group" aria-labelledby="message-title">
-            <div>
-              <h2 id="message-title">Message</h2>
-              <p>Pick a starter wish, then edit it for any card style.</p>
-            </div>
-            <div className="choice-row" aria-label="Message options">
-              {messagePresets.map((message) => (
-                <button
-                  key={message.id}
-                  className="choice-button"
-                  type="button"
-                  aria-pressed={message.id === selectedMessageId}
-                  onClick={() => handleMessagePresetSelect(message)}
-                >
-                  {message.label}
-                </button>
-              ))}
-            </div>
-            <div className="message-edit-fields">
-              <label>
-                Headline
-                <input
-                  value={messageHeadline}
-                  onChange={(event) => setMessageHeadline(event.target.value)}
-                  maxLength={70}
-                  placeholder="A birthday note just for you."
-                />
-              </label>
-              <label>
-                Message
-                <textarea
-                  value={messageBody}
-                  onChange={(event) => setMessageBody(event.target.value)}
-                  maxLength={180}
-                  rows={4}
-                  placeholder="Write your birthday wish here..."
-                />
-              </label>
-            </div>
-          </section>
+            {currentWizardStep.id === "download" && (
+              <section className="control-group" aria-labelledby="download-title">
+                <div>
+                  <h2 id="download-title">Download</h2>
+                  <p>Save the finished card or open the share sheet.</p>
+                </div>
+                <div className="download-actions">
+                  <button
+                    className="export-button"
+                    type="button"
+                    disabled={isExporting}
+                    onClick={handleDownloadCard}
+                  >
+                    Download card
+                  </button>
+                  <button
+                    className="export-button"
+                    type="button"
+                    disabled={isExporting}
+                    onClick={handleShareCard}
+                  >
+                    Share card
+                  </button>
+                </div>
+                {exportStatus && (
+                  <p className="wizard-export-status" role="status">
+                    {exportStatus}
+                  </p>
+                )}
+              </section>
+            )}
+          </div>
 
-          <section className="control-group" aria-labelledby="photo-title">
-            <div>
-              <h2 id="photo-title">Photo</h2>
-              <p>Add a favorite photo to the card.</p>
-            </div>
-            <div className="photo-actions">
-              <label className="upload-button">
-                Upload photo
-                <input
-                  ref={photoInputRef}
-                  className="visually-hidden"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                />
-              </label>
-              {photoPreviewUrl && (
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={handleRemovePhoto}
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-            {photoFileName && <p className="photo-file-name">{photoFileName}</p>}
-          </section>
-
-          <section className="control-group" aria-labelledby="style-title">
-            <div>
-              <h2 id="style-title">Style</h2>
-              <p>Pick the visual direction for the card.</p>
-            </div>
-            <div className="template-grid" aria-label="Template options">
-              {cardTemplates.map((template) => (
-                <button
-                  key={template.id}
-                  className="template-button"
-                  type="button"
-                  aria-pressed={template.id === selectedTemplateId}
-                  onClick={() => setSelectedTemplateId(template.id)}
-                >
-                  <span
-                    className={`template-swatch template-swatch--${template.id}`}
-                    aria-hidden="true"
-                  />
-                  <span>{template.label}</span>
-                </button>
-              ))}
-            </div>
-          </section>
+          <div className="wizard-navigation">
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={isFirstWizardStep}
+              onClick={handlePreviousWizardStep}
+            >
+              Back
+            </button>
+            <span>
+              Step {currentWizardStepIndex + 1} of {wizardSteps.length}
+            </span>
+            {isLastWizardStep ? (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setCurrentWizardStepId("recipient")}
+              >
+                Edit again
+              </button>
+            ) : (
+              <button
+                className="wizard-next-button"
+                type="button"
+                onClick={handleNextWizardStep}
+              >
+                Next
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
