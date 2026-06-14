@@ -1,0 +1,212 @@
+# Project Journal: Personalized Birthday Card
+
+## Table of Contents
+
+- [Why I Built This](#why-i-built-this)
+- [Working With Codex](#working-with-codex)
+- [Phase 0: Idea and MVP Planning](#phase-0-idea-and-mvp-planning)
+- [Phase 1: Project Foundation](#phase-1-project-foundation)
+- [Phase 2: Core Builder](#phase-2-core-builder)
+- [Phase 3: Personalization and Templates](#phase-3-personalization-and-templates)
+- [Phase 4: Export, Sharing, and Deployment](#phase-4-export-sharing-and-deployment)
+- [Phase 5: Next Polish Phase](#phase-5-next-polish-phase)
+- [What I Learned So Far](#what-i-learned-so-far)
+- [Future Journal Entries](#future-journal-entries)
+
+## Why I Built This
+
+The idea started from wanting to create personalized birthday cards for my loved ones and turn a simple celebration into something more personal and memorable.
+
+I did not want the app to feel like a plain form. I wanted it to feel closer to building a tiny celebration: choosing a style, adding a favorite photo, moving decorations around, and ending with something that could actually be downloaded or shared.
+
+The first version of the idea had a few important pieces:
+
+- Let the user enter the recipient's name and birthday.
+- Let the user choose a birthday message or write their own.
+- Let the user upload a photo.
+- Let the user choose a card template.
+- Let the user download or share the final card.
+
+I decided to build it one feature at a time instead of trying to create the entire app in one pass. That became one of the most important parts of the project. Each small step gave me a chance to test the experience, notice what felt awkward, and improve the design before moving forward.
+
+## Working With Codex
+
+I built this project while working with Codex as my coding assistant.
+
+I wanted to be transparent about that because it is part of the real development process behind this app. Codex helped with implementation, debugging, and explaining technical choices, but I guided the product direction, decided what features mattered, reviewed the app in the browser, requested changes, and approved commits.
+
+This workflow helped me practice a modern way of building software:
+
+- Breaking a broad idea into small, testable features.
+- Communicating requirements clearly.
+- Reviewing generated code instead of accepting it blindly.
+- Testing changes visually in the browser.
+- Making product decisions based on how the app actually felt to use.
+- Keeping a clean Git history with regular commits.
+
+Using Codex did not remove the need to think like a developer. It made the collaboration faster, but I still had to decide what the app should become, identify what did not feel right, and keep improving the user experience.
+
+## Phase 0: Idea and MVP Planning
+
+Before writing the full app, I broke the idea into an MVP.
+
+The first MVP was focused on the smallest useful version of the product: a user should be able to enter birthday card details, personalize a message, choose a style, add a photo, and create something they could send.
+
+I also decided to work in small phases:
+
+1. Build a working base.
+2. Add one feature.
+3. Review it in the browser.
+4. Adjust it if needed.
+5. Commit the working version.
+
+This gave the project a steady rhythm. Instead of feeling like one large app, it became a series of small decisions.
+
+## Phase 1: Project Foundation
+
+### Starting With the Scaffold
+
+The first implementation step was scaffolding the app with React, Vite, and TypeScript.
+
+At this point, the app did not have birthday card features yet. The goal was to create a clean technical foundation: a working development server, a TypeScript setup, a basic React entry point, and a project structure that could grow.
+
+This was also when I learned what "scaffold" means in a project. It is not the finished app. It is the starter structure that gives the project a working frame.
+
+Related commit: `chore: scaffold react vite app`
+
+### Creating the First App Shell
+
+After the app was running, I added the first real interface: a builder layout with controls on one side and a preview area on the other.
+
+This changed the project from "a React app" into "a birthday card app." The preview was important because the user should be able to see the card changing as they customize it.
+
+The first layout was intentionally simple. It gave the project a visual direction before adding too many controls.
+
+Related commit: `feat: add birthday card builder layout`
+
+## Phase 2: Core Builder
+
+### Adding Recipient Details
+
+Next, I added recipient information.
+
+The app started with a name input, then birthday details. At first, the birthday included a full date, but I changed it to month and day only. That made more sense for a birthday card because the year is usually unnecessary and can feel too personal.
+
+This was a small change, but it made the app feel more thoughtful. Good user experience is often about removing details that do not need to be there.
+
+Related commits:
+
+- `feat: add recipient name input`
+- `feat: add birthday month and day input`
+
+### Creating Message Options
+
+The next feature was message customization.
+
+I added preset messages so a user could quickly choose a tone, such as warm, funny, or heartfelt. Then I added custom editing so the user could change both the headline and the message body.
+
+This part went through an important design decision. At one point, custom messages behaved like their own separate style, but that made the templates feel less consistent. The better solution was to let users edit the message on any template.
+
+That made the app more flexible without making the design feel scattered.
+
+Related commits:
+
+- `feat: add message presets`
+- `feat: add custom message editor`
+
+## Phase 3: Personalization and Templates
+
+### Making the Card Feel Visual
+
+Once the basic inputs worked, the card needed personality.
+
+I added multiple templates, photo upload, and visual decorations like a birthday cake, flowers, balloons, a gift, and a Happy Birthday tag. This is when the app started to feel fun instead of just functional.
+
+The templates were not only color changes. Each one needed a different visual mood:
+
+- A soft, sweet style.
+- A playful confetti style.
+- A bold pop art style.
+- A photo-focused style.
+
+This stage taught me that visual polish is not just about adding decoration. The arrangement matters. White space, photo placement, sticker position, and text hierarchy all change how the card feels.
+
+Related commit: `feat: add card templates and photo preview`
+
+### Letting Users Move the Design Pieces
+
+After seeing the decorated templates, I wanted more control over the final card. A fixed arrangement did not feel personal enough.
+
+The next step was making the photo, stickers, and Happy Birthday tag movable. This changed the app from a template selector into a small design tool.
+
+This was one of the most satisfying features because it gave users creative control. Instead of accepting a layout, they could shape the card themselves.
+
+It also introduced more technical complexity. The app had to track element positions, support dragging, keep each template's layout separate, and still export the final card correctly.
+
+Related commit: `feat: add movable card elements`
+
+## Phase 4: Export, Sharing, and Deployment
+
+### Adding Download and Share
+
+Once the card could be customized, it needed a real finish line.
+
+I added the ability to download the card as an image and share it using the browser's native share feature when available. If sharing is not supported, the app falls back to downloading the PNG.
+
+This feature made the project feel much more complete because the user could actually take the card out of the app and send it to someone.
+
+It also required careful testing. The export needed to include the uploaded photo, the selected template, the message, and all moved elements exactly as they appeared in the preview.
+
+Related commit: `feat: add card export actions`
+
+### Preparing the Portfolio Version
+
+After the main builder worked, I added screenshots, improved the README, and deployed the app with Vercel.
+
+This step was not about adding a new app feature. It was about presenting the project clearly. A portfolio project needs more than working code. It should explain what the app does, what tools were used, what I learned, and where the project could go next.
+
+The README became the quick overview. This journal is the deeper story.
+
+Related commits:
+
+- `Add README and screenshots`
+- `Update README`
+
+## Phase 5: Next Polish Phase
+
+The next phase is focused on making the app feel more guided and more magical.
+
+The main ideas are:
+
+- Turn the editor into a guided step-by-step flow.
+- Add a recipient-facing envelope opening animation.
+- Add confetti or floating balloon animations.
+- Create shareable card links for cards without uploaded photos.
+
+These features would make the app feel more complete while still building on the foundation that already works.
+
+## What I Learned So Far
+
+This project helped me practice more than React syntax. It helped me practice product thinking.
+
+I learned how to break a large idea into smaller phases, how to review each feature before moving on, and how design decisions can change after seeing the app in the browser.
+
+Some of the most useful lessons were:
+
+- A small MVP is easier to improve than a large unfinished plan.
+- User input should feel guided, not overwhelming.
+- Templates need different layouts, not just different colors.
+- Personalization feels stronger when users can move pieces around.
+- AI assistance still requires human judgment, testing, and clear direction.
+- A portfolio project should show the process, not only the final result.
+
+## Future Journal Entries
+
+Going forward, I will update this journal after meaningful features. Each new entry should include:
+
+- Time frame or phase.
+- What changed.
+- Why the change mattered.
+- What I learned.
+- How I tested it.
+- Which commit captured the work.
