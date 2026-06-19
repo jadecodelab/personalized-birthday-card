@@ -211,6 +211,32 @@ How I tested it:
 
 Related commit: `feat: add guided builder wizard`
 
+### June 19, 2026: Preview Guidance and Photo Resizing
+
+After reviewing the guided builder, I noticed that movable card elements were powerful but not obvious enough. A user might not realize they can drag the photo, birthday tag, and stickers directly on the preview.
+
+To make that interaction clearer, I added a short guide near the live preview and inserted a dedicated Preview step before Download. I also replaced the temporary photo size control with a more natural interaction: desktop users can select the photo and resize it from the corners, while mobile users can pinch to resize.
+
+What changed:
+
+- Added a Preview step between Customize and Download.
+- Added a brief preview guide for movable stickers, the tag, and the photo.
+- Added desktop corner resize handles when the photo is selected.
+- Added mobile pinch resizing for the photo.
+- Clarified the Customize step instruction so users know to scroll to the preview for final adjustments.
+- Stored photo size separately for each template.
+- Prevented the photo from being dragged outside the card boundaries.
+- Made Reset layout restore the current template's photo size.
+- Kept downloaded card exports aligned with the adjusted photo size.
+
+What I learned:
+
+- A feature can exist technically but still need a small guide to be discoverable.
+- Giving users both position and size control makes the card feel more personal.
+- Direct manipulation often feels better than a form control for visual design tools.
+
+Related commit: `feat: add preview guide and photo sizing`
+
 The main ideas are:
 
 - Add a recipient-facing envelope opening animation.
