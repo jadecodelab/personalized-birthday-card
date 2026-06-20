@@ -1116,15 +1116,6 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                <div className="wizard-inline-actions">
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={handleResetMovableLayout}
-                  >
-                    Reset layout
-                  </button>
-                </div>
               </section>
             )}
 
@@ -1133,15 +1124,6 @@ export default function App() {
                 <div>
                   <h2 id="preview-title">Preview</h2>
                   <p>Scroll to the card for final adjustments, then continue to download.</p>
-                </div>
-                <div className="wizard-inline-actions">
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={handleResetMovableLayout}
-                  >
-                    Reset layout
-                  </button>
                 </div>
               </section>
             )}
@@ -1442,7 +1424,7 @@ export default function App() {
             )}
             style={getMovableItemStyle("photo")}
             role="group"
-            aria-label="Photo frame. Drag to move, or use the zoom buttons to resize."
+            aria-label="Photo frame. Drag to move, or drag a corner handle to resize."
             tabIndex={0}
             onPointerDown={(event) => handleMovablePointerDown(event, "photo")}
             onPointerMove={(event) => handleMovablePointerMove(event, "photo")}

@@ -84,7 +84,7 @@ h1 {
 
 .wizard-progress {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0;
   padding: 0;
   margin: 0;
@@ -96,6 +96,7 @@ h1 {
   display: grid;
   justify-items: center;
   gap: 7px;
+  min-width: 0;
   color: #576273;
   font-size: 0.72rem;
   font-weight: 800;
@@ -1309,7 +1310,8 @@ textarea {
   }
 
   .wizard-progress {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 16px;
   }
 
   .wizard-progress-item {
@@ -1324,9 +1326,7 @@ textarea {
   }
 
   .wizard-progress-item:not(:last-child)::after {
-    top: 9px;
-    left: calc(50% + 10px);
-    width: calc(100% - 20px);
+    display: none;
   }
 
   .wizard-navigation {
@@ -1512,5 +1512,11 @@ textarea {
   .card-preview--bold .card-copy h2 {
     font-size: clamp(1.25rem, 6.4vw, 1.58rem);
     line-height: 0.98;
+  }
+}
+
+@media (max-width: 420px) {
+  .wizard-progress {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

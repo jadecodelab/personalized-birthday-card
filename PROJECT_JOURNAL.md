@@ -228,6 +228,8 @@ What changed:
 - Prevented the photo from being dragged outside the card boundaries.
 - Made Reset layout restore the current template's photo size.
 - Kept downloaded card exports aligned with the adjusted photo size.
+- Removed duplicate Reset layout controls from the guided steps so the final preview stays cleaner.
+- Polished the six-step progress indicator so it fits across desktop and stacks neatly on small screens.
 
 What I learned:
 
