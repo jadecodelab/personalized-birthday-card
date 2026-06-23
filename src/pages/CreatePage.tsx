@@ -7,6 +7,7 @@ import {
   type PointerEvent,
 } from "react";
 import CardPreview from "../components/CardPreview";
+import EnvelopeReveal from "../components/EnvelopeReveal";
 import {
   cardTemplates,
   cloneMovableLayouts,
@@ -213,6 +214,7 @@ export default function CreatePage() {
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [cardLink, setCardLink] = useState("");
   const [linkStatus, setLinkStatus] = useState("");
+  const [isPreviewingAsRecipient, setIsPreviewingAsRecipient] = useState(false);
   const [currentWizardStepId, setCurrentWizardStepId] =
     useState<WizardStepId>("recipient");
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -716,39 +718,6 @@ export default function CreatePage() {
     }
   }
 
-  async function handleShareCard() {
-    setIsExporting(true);
-    setExportStatus("");
-
-    try {
-      const cardBlob = await getCardPngBlob();
-      const cardFile = new File([cardBlob], cardFileName, {
-        type: "image/png",
-      });
-      const shareData = {
-        files: [cardFile],
-        title: `Birthday card for ${previewName}`,
-        text: `A birthday card for ${previewName}`,
-      };
-      const shareNavigator = navigator as Navigator & {
-        canShare?: (data: ShareData) => boolean;
-      };
-
-      if (shareNavigator.share && shareNavigator.canShare?.(shareData)) {
-        await shareNavigator.share(shareData);
-        setExportStatus("Share sheet opened.");
-        return;
-      }
-
-      downloadBlob(cardBlob, cardFileName);
-      setExportStatus("Sharing is not available here, so the card downloaded.");
-    } catch {
-      setExportStatus("Share did not work. Try downloading the card instead.");
-    } finally {
-      setIsExporting(false);
-    }
-  }
-
   async function handleCreateCardLink() {
     setIsGeneratingLink(true);
     setLinkStatus("");
@@ -1074,8 +1043,18 @@ export default function CreatePage() {
               <section className="control-group" aria-labelledby="preview-title">
                 <div>
                   <h2 id="preview-title">Preview</h2>
-                  <p>Scroll to the card for final adjustments, then continue to download.</p>
+                  <p>
+                    Scroll to the card for final adjustments, or see exactly
+                    what the recipient will experience when they open it.
+                  </p>
                 </div>
+                <button
+                  className="export-button"
+                  type="button"
+                  onClick={() => setIsPreviewingAsRecipient(true)}
+                >
+                  Preview as recipient
+                </button>
               </section>
             )}
 
@@ -1083,24 +1062,16 @@ export default function CreatePage() {
               <section className="control-group" aria-labelledby="download-title">
                 <div>
                   <h2 id="download-title">Download</h2>
-                  <p>Save the finished card or open the share sheet.</p>
+                  <p>Save the finished card or create a link to send it.</p>
                 </div>
                 <div className="download-actions">
                   <button
-                    className="export-button"
+                    className="secondary-button"
                     type="button"
                     disabled={isExporting}
                     onClick={handleDownloadCard}
                   >
                     Download card
-                  </button>
-                  <button
-                    className="export-button"
-                    type="button"
-                    disabled={isExporting}
-                    onClick={handleShareCard}
-                  >
-                    Share card
                   </button>
                   <button
                     className="export-button"
@@ -1189,14 +1160,6 @@ export default function CreatePage() {
               Download
             </button>
             <button
-              className="export-button"
-              type="button"
-              disabled={isExporting}
-              onClick={handleShareCard}
-            >
-              Share
-            </button>
-            <button
               className="reset-layout-button"
               type="button"
               disabled={isExporting}
@@ -1236,6 +1199,29 @@ export default function CreatePage() {
           onPhotoResizePointerEnd={handlePhotoResizePointerEnd}
           onPhotoResizeMouseDown={handlePhotoResizeMouseDown}
         />
+        {isPreviewingAsRecipient && (
+          <div className="recipient-preview-overlay">
+            <button
+              type="button"
+              className="recipient-preview-close"
+              onClick={() => setIsPreviewingAsRecipient(false)}
+            >
+              Back to editing
+            </button>
+            <EnvelopeReveal recipientName={previewName}>
+              <CardPreview
+                interactive={false}
+                templateId={selectedTemplate.id}
+                movableLayout={selectedMovableLayout}
+                photoScale={selectedPhotoScale}
+                photoPreviewUrl={photoPreviewUrl}
+                previewName={previewName}
+                previewBirthday={previewBirthday}
+                message={selectedMessage}
+              />
+            </EnvelopeReveal>
+          </div>
+        )}
       </aside>
     </main>
   );

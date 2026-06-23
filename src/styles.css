@@ -78,7 +78,9 @@ h1 {
 }
 
 .wizard-shell {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   gap: 18px;
 }
 
@@ -212,7 +214,10 @@ h1 {
 }
 
 .control-stack {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
   gap: 18px;
 }
 
@@ -459,7 +464,11 @@ textarea {
   flex-direction: column;
   gap: 16px;
   padding: 28px;
-  background: #30264d;
+  background:
+    radial-gradient(circle at 16% 10%, rgb(255 143 179 / 0.24) 0 18%, transparent 19%),
+    radial-gradient(circle at 88% 80%, rgb(77 157 224 / 0.2) 0 22%, transparent 23%),
+    radial-gradient(circle at 92% 16%, rgb(255 207 63 / 0.16) 0 12%, transparent 13%),
+    linear-gradient(165deg, #3c2f60 0%, #30264d 55%, #261e3d 100%);
   border-radius: 8px;
   color: #ffffff;
   overflow: hidden;
@@ -544,6 +553,41 @@ textarea {
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.35;
+}
+
+.recipient-preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(255 143 179 / 0.16) 0 40%, transparent 60%),
+    #241c3b;
+}
+
+.recipient-preview-close {
+  align-self: flex-end;
+  min-height: 34px;
+  padding: 7px 12px;
+  color: #ffffff;
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.26);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.recipient-preview-close:hover,
+.recipient-preview-close:focus-visible {
+  background: rgb(255 255 255 / 0.2);
+  border-color: rgb(255 255 255 / 0.48);
+  outline: none;
 }
 
 .envelope-reveal {
@@ -1475,7 +1519,9 @@ textarea {
   }
 
   .preview-panel {
-    position: static;
+    /* Stays a positioned (non-static) box so .recipient-preview-overlay's
+       inset:0 keeps using this panel as its containing block, not the page. */
+    position: relative;
   }
 
   .card-preview {
