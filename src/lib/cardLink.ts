@@ -1,4 +1,9 @@
-import { cardTemplates, type CardTemplateId, type TemplateMovableLayout } from "./cardData";
+import {
+  cardTemplates,
+  type CardTemplateId,
+  type MovableItemId,
+  type TemplateMovableLayout,
+} from "./cardData";
 
 export type SharedCardPayload = {
   v: 1;
@@ -9,6 +14,7 @@ export type SharedCardPayload = {
   headline: string;
   body: string;
   layout: TemplateMovableLayout;
+  activeStickers: MovableItemId[];
   photoScale: number;
   photoDataUrl: string | null;
 };
@@ -46,6 +52,7 @@ export function decodeCardLink(encoded: string): SharedCardPayload | null {
       typeof data.photoScale !== "number" ||
       !data.layout ||
       typeof data.layout !== "object" ||
+      !Array.isArray(data.activeStickers) ||
       !cardTemplates.some((template) => template.id === data.templateId)
     ) {
       return null;

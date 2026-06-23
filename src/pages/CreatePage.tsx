@@ -16,6 +16,7 @@ import {
   formatBirthdayDate,
   messagePresets,
   months,
+  stickerCatalog,
   type CardTemplateId,
   type MovableItemId,
   type MovablePoint,
@@ -205,6 +206,11 @@ export default function CreatePage() {
   const [photoUploadError, setPhotoUploadError] = useState("");
   const [movableLayouts, setMovableLayouts] = useState(cloneMovableLayouts);
   const [photoScales, setPhotoScales] = useState({ ...defaultPhotoScales });
+  // Stickers/tags are opt-in - a new card starts with none active. This is
+  // independent of template, so switching styles doesn't clear selections.
+  const [activeStickerIds, setActiveStickerIds] = useState<MovableItemId[]>(
+    [],
+  );
   const [activeMovableItemId, setActiveMovableItemId] =
     useState<MovableItemId | null>(null);
   const [selectedMovableItemId, setSelectedMovableItemId] =
@@ -546,6 +552,17 @@ export default function CreatePage() {
     }));
   }
 
+  function handleToggleSticker(itemId: MovableItemId) {
+    setActiveStickerIds((currentIds) =>
+      currentIds.includes(itemId)
+        ? currentIds.filter((id) => id !== itemId)
+        : [...currentIds, itemId],
+    );
+    setSelectedMovableItemId((currentId) =>
+      currentId === itemId ? null : currentId,
+    );
+  }
+
   function updatePhotoScale(nextScale: number) {
     const boundedScale = clamp(nextScale, 70, 130);
 
@@ -736,6 +753,7 @@ export default function CreatePage() {
         headline: selectedMessage.headline,
         body: selectedMessage.body,
         layout: selectedMovableLayout,
+        activeStickers: activeStickerIds,
         photoScale: selectedPhotoScale,
         photoDataUrl,
       };
@@ -1036,6 +1054,30 @@ export default function CreatePage() {
                     </button>
                   ))}
                 </div>
+                <div>
+                  <h3>Stickers &amp; tags</h3>
+                  <p>
+                    Add any you&apos;d like, then drag them anywhere on the
+                    card.
+                  </p>
+                </div>
+                <div className="choice-row sticker-picker" aria-label="Sticker and tag options">
+                  {stickerCatalog.map((sticker) => (
+                    <button
+                      key={sticker.id}
+                      className="choice-button sticker-picker-button"
+                      type="button"
+                      aria-pressed={activeStickerIds.includes(sticker.id)}
+                      onClick={() => handleToggleSticker(sticker.id)}
+                    >
+                      <span
+                        className={`sticker-swatch sticker-swatch--${sticker.id}`}
+                        aria-hidden="true"
+                      />
+                      <span>{sticker.label}</span>
+                    </button>
+                  ))}
+                </div>
               </section>
             )}
 
@@ -1183,6 +1225,7 @@ export default function CreatePage() {
           interactive
           templateId={selectedTemplate.id}
           movableLayout={selectedMovableLayout}
+          activeStickerIds={activeStickerIds}
           photoScale={selectedPhotoScale}
           photoPreviewUrl={photoPreviewUrl}
           previewName={previewName}
@@ -1213,6 +1256,7 @@ export default function CreatePage() {
                 interactive={false}
                 templateId={selectedTemplate.id}
                 movableLayout={selectedMovableLayout}
+                activeStickerIds={activeStickerIds}
                 photoScale={selectedPhotoScale}
                 photoPreviewUrl={photoPreviewUrl}
                 previewName={previewName}

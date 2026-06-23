@@ -49,6 +49,16 @@ export type MovableItemId =
   | "gift"
   | "photo"
   | "ribbon";
+
+// Stickers and tags the user can opt into adding to the card - "photo" isn't
+// here since it's core content, not a decoration, and stays always present.
+export const stickerCatalog: Array<{ id: MovableItemId; label: string }> = [
+  { id: "cake", label: "Cake" },
+  { id: "flowers", label: "Flowers" },
+  { id: "balloons", label: "Balloons" },
+  { id: "gift", label: "Gift" },
+  { id: "ribbon", label: "Happy Birthday tag" },
+];
 export type MovablePoint = {
   x: number;
   y: number;

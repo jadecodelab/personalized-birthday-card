@@ -14,6 +14,7 @@ import type {
 type CardPreviewProps = {
   templateId: CardTemplateId;
   movableLayout: TemplateMovableLayout;
+  activeStickerIds: MovableItemId[];
   photoScale: number;
   photoPreviewUrl: string | null;
   previewName: string;
@@ -52,6 +53,7 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
     {
       templateId,
       movableLayout,
+      activeStickerIds,
       photoScale,
       photoPreviewUrl,
       previewName,
@@ -126,6 +128,7 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
           <span className="sticker sticker--five" />
         </div>
         <div className="card-graphics">
+          {activeStickerIds.includes("cake") && (
           <svg
             className={getItemClassName("card-graphic card-graphic--cake", "cake")}
             style={getItemStyle("cake")}
@@ -158,6 +161,8 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
             <circle cx="69" cy="94" r="3" fill="#ffffff" />
             <circle cx="88" cy="92" r="3" fill="#ffffff" />
           </svg>
+          )}
+          {activeStickerIds.includes("flowers") && (
           <svg
             className={getItemClassName(
               "card-graphic card-graphic--flowers",
@@ -192,6 +197,8 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
             <circle cx="52" cy="54" r="17" fill="#ff8fb3" />
             <circle cx="76" cy="54" r="15" fill="#fff7cf" />
           </svg>
+          )}
+          {activeStickerIds.includes("balloons") && (
           <svg
             className={getItemClassName(
               "card-graphic card-graphic--balloons",
@@ -218,6 +225,8 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
             <circle cx="39" cy="32" r="7" fill="#ffffff" opacity="0.72" />
             <circle cx="82" cy="34" r="7" fill="#ffffff" opacity="0.72" />
           </svg>
+          )}
+          {activeStickerIds.includes("gift") && (
           <svg
             className={getItemClassName("card-graphic card-graphic--gift", "gift")}
             style={getItemStyle("gift")}
@@ -246,7 +255,9 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
               strokeWidth="8"
             />
           </svg>
+          )}
         </div>
+        {activeStickerIds.includes("ribbon") && (
         <div
           className={getItemClassName("card-ribbon", "ribbon")}
           style={getItemStyle("ribbon")}
@@ -257,6 +268,7 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
         >
           Happy Birthday
         </div>
+        )}
         <div
           className={getItemClassName(
             `photo-placeholder ${photoPreviewUrl ? "photo-placeholder--filled" : ""}`,

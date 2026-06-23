@@ -6,6 +6,7 @@ import {
   defaultPhotoScales,
   formatBirthdayDate,
   messagePresets,
+  stickerCatalog,
 } from "../lib/cardData";
 import { decodeCardLink } from "../lib/cardLink";
 
@@ -31,6 +32,10 @@ export default function CardPage() {
     ? { headline: sharedCard.headline, body: sharedCard.body }
     : { headline: sampleMessage.headline, body: sampleMessage.body };
   const movableLayout = sharedCard?.layout ?? defaultMovableLayouts[templateId];
+  // The no-link demo card shows every sticker/tag so it reads as a finished
+  // example; a real shared card faithfully reflects what the sender added.
+  const activeStickerIds =
+    sharedCard?.activeStickers ?? stickerCatalog.map((sticker) => sticker.id);
   const photoScale = sharedCard?.photoScale ?? defaultPhotoScales[templateId];
   const photoPreviewUrl = sharedCard?.photoDataUrl ?? null;
 
@@ -51,6 +56,7 @@ export default function CardPage() {
             interactive={false}
             templateId={templateId}
             movableLayout={movableLayout}
+            activeStickerIds={activeStickerIds}
             photoScale={photoScale}
             photoPreviewUrl={photoPreviewUrl}
             previewName={previewName}
