@@ -199,6 +199,18 @@ h1 {
   line-height: 1.35;
 }
 
+.share-link-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.share-link-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
 .control-stack {
   display: grid;
   gap: 18px;

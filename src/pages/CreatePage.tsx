@@ -20,6 +20,8 @@ import {
   type MovablePoint,
   type ResizeCorner,
 } from "../lib/cardData";
+import { buildCardShareUrl, type SharedCardPayload } from "../lib/cardLink";
+import { compressImageToDataUrl } from "../lib/photoCompression";
 
 const wizardSteps = [
   { id: "recipient", label: "Recipient" },
@@ -207,6 +209,9 @@ export default function CreatePage() {
     useState<MovableItemId | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState("");
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [cardLink, setCardLink] = useState("");
+  const [linkStatus, setLinkStatus] = useState("");
   const [currentWizardStepId, setCurrentWizardStepId] =
     useState<WizardStepId>("recipient");
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -731,6 +736,60 @@ export default function CreatePage() {
     }
   }
 
+  async function handleCreateCardLink() {
+    setIsGeneratingLink(true);
+    setLinkStatus("");
+
+    try {
+      const photoDataUrl = photoPreviewUrl
+        ? await compressImageToDataUrl(photoPreviewUrl)
+        : null;
+      const payload: SharedCardPayload = {
+        v: 1,
+        name: recipientName,
+        month: birthdayMonth,
+        day: birthdayDay,
+        templateId: selectedTemplate.id,
+        headline: selectedMessage.headline,
+        body: selectedMessage.body,
+        layout: selectedMovableLayout,
+        photoScale: selectedPhotoScale,
+        photoDataUrl,
+      };
+      const shareUrl = buildCardShareUrl(payload);
+
+      setCardLink(shareUrl);
+
+      try {
+        if (!navigator.clipboard?.writeText) {
+          throw new Error("Clipboard API not available.");
+        }
+
+        await navigator.clipboard.writeText(shareUrl);
+        setLinkStatus("Link copied to clipboard.");
+      } catch {
+        setLinkStatus("Link ready below. Copy it manually.");
+      }
+    } catch {
+      setLinkStatus("Could not create the link. Try again.");
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  }
+
+  async function handleCopyCardLink() {
+    if (!cardLink) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(cardLink);
+      setLinkStatus("Link copied to clipboard.");
+    } catch {
+      setLinkStatus("Could not copy automatically. Select the link text to copy it.");
+    }
+  }
+
   useEffect(() => {
     if (!photoPreviewUrl) {
       return;
@@ -1016,10 +1075,41 @@ export default function CreatePage() {
                   >
                     Share card
                   </button>
+                  <button
+                    className="export-button"
+                    type="button"
+                    disabled={isGeneratingLink}
+                    onClick={handleCreateCardLink}
+                  >
+                    {isGeneratingLink ? "Creating link..." : "Create card link"}
+                  </button>
                 </div>
                 {exportStatus && (
                   <p className="wizard-export-status" role="status">
                     {exportStatus}
+                  </p>
+                )}
+                {cardLink && (
+                  <div className="share-link-row">
+                    <input
+                      className="share-link-input"
+                      type="text"
+                      readOnly
+                      value={cardLink}
+                      onFocus={(event) => event.currentTarget.select()}
+                    />
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={handleCopyCardLink}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                )}
+                {linkStatus && (
+                  <p className="wizard-export-status" role="status">
+                    {linkStatus}
                   </p>
                 )}
               </section>
