@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { playOpenChime } from "../lib/sound";
 
 type EnvelopeRevealProps = {
   recipientName: string;
@@ -11,6 +12,11 @@ export default function EnvelopeReveal({
 }: EnvelopeRevealProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  function handleOpen() {
+    playOpenChime();
+    setIsOpen(true);
+  }
+
   return (
     <div
       className={`envelope-reveal ${isOpen ? "envelope-reveal--open" : ""}`}
@@ -21,7 +27,7 @@ export default function EnvelopeReveal({
       <button
         type="button"
         className="envelope"
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         disabled={isOpen}
         aria-label={`Open the birthday card for ${recipientName}`}
       >
