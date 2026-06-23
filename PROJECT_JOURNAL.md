@@ -632,6 +632,28 @@ How I tested it:
 
 Related commit: `feat: remove the Happy Birthday tag, show real sticker art in the picker`
 
+### June 23, 2026: A Closing Text Flourish
+
+One more addition to the celebration sequence: an animated "Happy Birthday" text as the final beat. I personalized it using the `recipientName` prop that was already being passed into `EnvelopeReveal` for the envelope's "To:" label and aria text, so it reads "Happy Birthday, Ada!" rather than a generic phrase.
+
+This one breaks a rule I'd been holding to for every other effect in this sequence: confetti and balloons were deliberately kept off the card's own content. I let this one overlay the card directly, because it's meant to be a brief "and there it is" climax, not a persistent decoration - it bounces in, holds for a couple seconds with a subtle pulse, then fades completely, leaving the card fully readable again. The temporariness is what makes covering the content acceptable here in a way it wouldn't have been for confetti sitting on top of the message indefinitely.
+
+What changed:
+
+- A new `.finale-text` layer in `EnvelopeReveal`, arriving 7 seconds into the open phase - after the balloons have already started, not at the very beginning - and fading out roughly 3.4 seconds later.
+- Hidden entirely under `prefers-reduced-motion`, consistent with the confetti and balloon layers.
+
+What I learned:
+
+- Not every new effect needs to follow the same constraint as the ones before it. The "don't cover the content" rule made sense for decorations meant to coexist with the card; it didn't apply to a flourish whose entire job is to be a temporary climax and then get out of the way.
+
+How I tested it:
+
+- Checked the text's computed opacity at several timestamps to confirm it's hidden early, visible by the expected moment, and faded again afterward - not just that the keyframes look right on paper.
+- Confirmed it's personalized correctly with the recipient's name, hidden under `prefers-reduced-motion`, and that the existing mobile/download regression checks still pass.
+
+Related commit: `feat: animated "Happy Birthday" text as the celebration's closing flourish`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
