@@ -144,6 +144,9 @@ export default function EnvelopeReveal({
           />
         ))}
       </div>
+      <div className="finale-text" aria-hidden="true">
+        <span>Happy Birthday, {recipientName}!</span>
+      </div>
     </div>
   );
 }
