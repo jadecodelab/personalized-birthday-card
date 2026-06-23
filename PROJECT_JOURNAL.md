@@ -530,6 +530,30 @@ How I tested it:
 
 Related commit: `feat: redesign the celebration sequence for a slower, premium feel`
 
+### June 23, 2026: Letting the Celebration Use the Whole Panel
+
+One more round of feedback on the same sequence: the confetti and balloons were both confined to the card's own narrow column, when the preview panel around the card is noticeably wider. The ask was to let confetti fall across the whole section, slow it down further, and make the balloons - which were already floating beside the card - actually look like balloons instead of plain ellipses.
+
+The fix was mostly about where the effect layers are positioned, not the pieces themselves: `.confetti-burst` and `.balloon-burst` were sized to exactly match the card's own box (`inset: 0`), so anything inside them was clipped at the card's edges no matter how I positioned individual pieces. I enlarged both layers well past the card, into the panel's side margins, and let the *panel's* existing `overflow: hidden` do the clipping instead of the card's.
+
+What changed:
+
+- Confetti: 20 pieces spread across the full width instead of two edge clusters, bigger, and roughly twice as slow per piece.
+- Balloons: moved into the panel's side margins so they read as floating beside the card rather than just past its literal edge, and redesigned with a glossy highlight, a drop shadow, and a small triangular knot instead of a flat ellipse.
+
+What I learned:
+
+- Enlarging the effect layers introduced a fresh version of a bug I'd already fixed once for balloons: the pieces' starting position moved into a "dead zone" above the panel's visible clipping area, so confetti was invisible for the first stretch of its fall even though the animation code was completely correct. Same root cause as before (start position outside the visible clip region), just reintroduced by a different change. That's a pattern worth remembering for any future layer I enlarge this way: check where its content actually starts relative to where it gets clipped, every time, not just once.
+- Checking a layer's `getBoundingClientRect()` against its clipping ancestor's is a much faster way to catch this than scrubbing through screenshots guessing why something "isn't showing up yet."
+
+How I tested it:
+
+- Measured the confetti layer's and the preview panel's actual bounding boxes to find the exact pixel gap causing the invisibility, rather than guessing at a fix.
+- Took screenshots across the sequence again after the fix and could see confetti and balloons clearly in the panel's side margins, not just within the card's column.
+- Re-ran the full regression set (mobile overflow, builder overlay → download, reduced motion) to confirm enlarging these layers didn't break anything outside their own visuals.
+
+Related commit: `feat: confetti spans the whole preview section, nicer slower balloons`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
