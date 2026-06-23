@@ -807,28 +807,28 @@ textarea {
   position: absolute;
   bottom: -6%;
   left: var(--balloon-left);
-  width: 34px;
-  height: 42px;
+  width: 58px;
+  height: 72px;
   background:
     radial-gradient(circle at 32% 26%, rgb(255 255 255 / 0.65), transparent 45%),
     var(--balloon-color);
   border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
   box-shadow:
-    inset -5px -5px 9px rgb(0 0 0 / 0.14),
-    0 8px 16px rgb(34 16 36 / 0.22);
+    inset -8px -8px 14px rgb(0 0 0 / 0.14),
+    0 12px 24px rgb(34 16 36 / 0.24);
   opacity: 0;
 }
 
 .balloon-piece::before {
   content: "";
   position: absolute;
-  bottom: -6px;
+  bottom: -10px;
   left: 50%;
   width: 0;
   height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 7px solid var(--balloon-color);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 12px solid var(--balloon-color);
   filter: brightness(0.82);
   transform: translateX(-50%);
 }
@@ -838,20 +838,19 @@ textarea {
   position: absolute;
   top: 100%;
   left: 50%;
-  width: 1.5px;
-  height: 30px;
+  width: 2px;
+  height: 46px;
   background: rgb(255 255 255 / 0.45);
-  transform: translateX(-50%) translateY(2px);
+  transform: translateX(-50%) translateY(4px);
 }
 
-/* Balloons join after the confetti burst, not alongside it, and rise slowly
-   with a gentle side-to-side sway rather than a straight climb. The
-   keyframes (not the timing-function) front-load enough rise by 10% to
-   clear the bottom-edge starting offset quickly, so they're not still
-   invisible below frame deep into their own animation. */
+/* Balloons "blow up" only once every confetti piece has finished falling
+   (the latest confetti piece's stagger + duration ends at 1.45s + 4.45s =
+   5.9s), not while confetti is still in the air - a single closing beat
+   instead of two effects overlapping. */
 .envelope-reveal--open .balloon-piece {
   animation: balloon-float var(--balloon-duration) ease forwards;
-  animation-delay: calc(2.1s + var(--balloon-stagger));
+  animation-delay: calc(6s + var(--balloon-stagger));
 }
 
 @keyframes balloon-float {

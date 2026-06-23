@@ -13,6 +13,13 @@ type RevealPhase = "closed" | "anticipating" | "open";
 // since a silent pause with nothing animating reads as lag, not anticipation.
 const ANTICIPATION_PAUSE_MS = 450;
 
+// How long after the open phase starts the card has finished sliding in and
+// settling (matches the CSS: 0.65s transition-delay + 1s duration on
+// .envelope-reveal-card). The music waits this long, plus a further pause,
+// so it starts once the recipient can actually see the card.
+const CARD_SETTLE_MS = 1650;
+const MUSIC_DELAY_AFTER_CARD_MS = 3000;
+
 // Spread across the whole preview section (the confetti layer itself is
 // enlarged well past the card's own box in CSS), not just two edge clusters,
 // so it visibly rains across the full panel rather than staying confined to
@@ -40,14 +47,11 @@ const CONFETTI_PIECES = [
   { left: "93%", color: "#ffcf3f", width: "10px", height: "16px", stagger: "380ms", burstX: "16px", driftX: "40px", fallY: "550px", rotate: "-440deg", duration: "3.3s" },
 ];
 
-// Anchored just past the card's left/right edges, in the wider preview
-// section's side margins, so they read as floating beside the card.
+// Just two large balloons, one per side, instead of a small crowd - they're
+// the closing beat of the sequence, not background filler.
 const BALLOON_PIECES = [
-  { left: "2%", color: "#ff6b94", stagger: "0ms", drift: "20px", tilt: "9deg", duration: "6.2s" },
-  { left: "12%", color: "#ffd15c", stagger: "650ms", drift: "-16px", tilt: "-8deg", duration: "6.8s" },
-  { left: "88%", color: "#4d9de0", stagger: "300ms", drift: "-18px", tilt: "-9deg", duration: "6.6s" },
-  { left: "97%", color: "#ff8fb3", stagger: "950ms", drift: "16px", tilt: "8deg", duration: "6.0s" },
-  { left: "6%", color: "#59c6a4", stagger: "1300ms", drift: "18px", tilt: "10deg", duration: "6.4s" },
+  { left: "6%", color: "#ff6b94", stagger: "0ms", drift: "22px", tilt: "8deg", duration: "7s" },
+  { left: "90%", color: "#4d9de0", stagger: "250ms", drift: "-20px", tilt: "-8deg", duration: "7.3s" },
 ];
 
 export default function EnvelopeReveal({
@@ -62,15 +66,18 @@ export default function EnvelopeReveal({
     ).matches;
 
     if (prefersReducedMotion) {
-      playBirthdayTune();
       setPhase("open");
+      window.setTimeout(playBirthdayTune, MUSIC_DELAY_AFTER_CARD_MS);
       return;
     }
 
     setPhase("anticipating");
     window.setTimeout(() => {
-      playBirthdayTune();
       setPhase("open");
+      window.setTimeout(
+        playBirthdayTune,
+        CARD_SETTLE_MS + MUSIC_DELAY_AFTER_CARD_MS,
+      );
     }, ANTICIPATION_PAUSE_MS);
   }
 
