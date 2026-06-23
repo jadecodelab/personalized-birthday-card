@@ -42,22 +42,17 @@ export const cardTemplates = [
 ] as const;
 
 export type CardTemplateId = (typeof cardTemplates)[number]["id"];
-export type MovableItemId =
-  | "cake"
-  | "flowers"
-  | "balloons"
-  | "gift"
-  | "photo"
-  | "ribbon";
+export type MovableItemId = "cake" | "flowers" | "balloons" | "gift" | "photo";
 
-// Stickers and tags the user can opt into adding to the card - "photo" isn't
-// here since it's core content, not a decoration, and stays always present.
+// Stickers the user can opt into adding to the card - "photo" isn't here
+// since it's core content, not a decoration, and stays always present.
+// "label" isn't shown (the sticker's own art speaks for itself) but is kept
+// for accessible button labels in the picker.
 export const stickerCatalog: Array<{ id: MovableItemId; label: string }> = [
   { id: "cake", label: "Cake" },
   { id: "flowers", label: "Flowers" },
   { id: "balloons", label: "Balloons" },
   { id: "gift", label: "Gift" },
-  { id: "ribbon", label: "Happy Birthday tag" },
 ];
 export type MovablePoint = {
   x: number;
@@ -73,7 +68,6 @@ export const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout
     balloons: { x: 82, y: 24 },
     gift: { x: 52, y: 18 },
     photo: { x: 60, y: 31 },
-    ribbon: { x: 20, y: 13 },
   },
   playful: {
     cake: { x: 16, y: 28 },
@@ -81,7 +75,6 @@ export const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout
     balloons: { x: 86, y: 27 },
     gift: { x: 46, y: 18 },
     photo: { x: 60, y: 31 },
-    ribbon: { x: 80, y: 10 },
   },
   bold: {
     cake: { x: 84, y: 31 },
@@ -89,7 +82,6 @@ export const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout
     balloons: { x: 17, y: 28 },
     gift: { x: 28, y: 34 },
     photo: { x: 60, y: 28 },
-    ribbon: { x: 24, y: 12 },
   },
   photo: {
     cake: { x: 84, y: 34 },
@@ -97,7 +89,6 @@ export const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout
     balloons: { x: 84, y: 28 },
     gift: { x: 35, y: 16 },
     photo: { x: 60, y: 26 },
-    ribbon: { x: 22, y: 13 },
   },
 };
 

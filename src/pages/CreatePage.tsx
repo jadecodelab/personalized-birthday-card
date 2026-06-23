@@ -24,6 +24,7 @@ import {
 } from "../lib/cardData";
 import { buildCardShareUrl, type SharedCardPayload } from "../lib/cardLink";
 import { compressPhotoForLink } from "../lib/photoCompression";
+import { stickerGraphicContent, stickerGraphicViewBox } from "../lib/stickerGraphics";
 
 const wizardSteps = [
   { id: "recipient", label: "Recipient" },
@@ -206,7 +207,7 @@ export default function CreatePage() {
   const [photoUploadError, setPhotoUploadError] = useState("");
   const [movableLayouts, setMovableLayouts] = useState(cloneMovableLayouts);
   const [photoScales, setPhotoScales] = useState({ ...defaultPhotoScales });
-  // Stickers/tags are opt-in - a new card starts with none active. This is
+  // Stickers are opt-in - a new card starts with none active. This is
   // independent of template, so switching styles doesn't clear selections.
   const [activeStickerIds, setActiveStickerIds] = useState<MovableItemId[]>(
     [],
@@ -543,7 +544,6 @@ export default function CreatePage() {
         balloons: { ...defaultMovableLayouts[selectedTemplate.id].balloons },
         gift: { ...defaultMovableLayouts[selectedTemplate.id].gift },
         photo: { ...defaultMovableLayouts[selectedTemplate.id].photo },
-        ribbon: { ...defaultMovableLayouts[selectedTemplate.id].ribbon },
       },
     }));
     setPhotoScales((currentScales) => ({
@@ -1055,28 +1055,35 @@ export default function CreatePage() {
                   ))}
                 </div>
                 <div>
-                  <h3>Stickers &amp; tags</h3>
+                  <h3>Stickers</h3>
                   <p>
-                    Add any you&apos;d like, then drag them anywhere on the
-                    card.
+                    Click a sticker to add it to the card, or click it again
+                    to remove it. Drag any sticker on the card to move it.
                   </p>
                 </div>
-                <div className="choice-row sticker-picker" aria-label="Sticker and tag options">
-                  {stickerCatalog.map((sticker) => (
-                    <button
-                      key={sticker.id}
-                      className="choice-button sticker-picker-button"
-                      type="button"
-                      aria-pressed={activeStickerIds.includes(sticker.id)}
-                      onClick={() => handleToggleSticker(sticker.id)}
-                    >
-                      <span
-                        className={`sticker-swatch sticker-swatch--${sticker.id}`}
-                        aria-hidden="true"
-                      />
-                      <span>{sticker.label}</span>
-                    </button>
-                  ))}
+                <div className="sticker-picker" aria-label="Sticker options">
+                  {stickerCatalog.map((sticker) => {
+                    const isActive = activeStickerIds.includes(sticker.id);
+
+                    return (
+                      <button
+                        key={sticker.id}
+                        className="sticker-picker-button"
+                        type="button"
+                        aria-pressed={isActive}
+                        aria-label={`${isActive ? "Remove" : "Add"} ${sticker.label.toLowerCase()} ${isActive ? "from" : "to"} the card`}
+                        onClick={() => handleToggleSticker(sticker.id)}
+                      >
+                        <svg
+                          className="sticker-picker-icon"
+                          viewBox={stickerGraphicViewBox[sticker.id]}
+                          aria-hidden="true"
+                        >
+                          {stickerGraphicContent[sticker.id]}
+                        </svg>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -1218,7 +1225,7 @@ export default function CreatePage() {
           </p>
         )}
         <p className="preview-guide">
-          Drag stickers, the tag, and photo. Select the photo to resize it.
+          Drag stickers and the photo. Select the photo to resize it.
         </p>
         <CardPreview
           ref={previewCardRef}
