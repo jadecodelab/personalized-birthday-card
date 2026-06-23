@@ -504,6 +504,32 @@ How I tested it:
 
 Related commits: `feat: make the birthday tune upbeat - faster tempo, brighter tone, bass`, `feat: add floating balloon animation on envelope open`
 
+### June 23, 2026: Slowing Down for a Premium Feel
+
+I got detailed direction on the celebration sequence as a whole: slow everything down, give it a real beginning-middle-end shape (anticipation, then the open, then the celebration), and make sure no single effect overwhelms the card itself. This was less about adding anything new and more about pacing and restraint - the opposite instinct from the last few rounds.
+
+I reworked the whole thing as a timeline instead of a pile of independent effects that all start at once:
+
+- A 450ms anticipation pause after the tap, before anything visibly moves, with just a small seal pulse as the only cue that something's about to happen. Skipped for `prefers-reduced-motion`, since a silent pause with nothing animating would just read as the app being slow, not as a deliberate beat.
+- The flap's rotation became a real `@keyframes` animation instead of a plain transition, so I could grow then fade its shadow alongside the rotation - meant to feel like a flap physically lifting off the back panel, not just spinning.
+- The card now slides up out of the envelope and settles with a slight overshoot ("back" easing), instead of just fading and scaling in place.
+- Confetti waits until the card has mostly settled before it starts, and now bursts from two small clusters near the card's left and right edges instead of raining across the full width - varied sizes and speeds per piece instead of identical squares.
+- Balloons join in after the confetti burst, not at the same time, rising from the bottom corners with a side-to-side sway instead of a straight climb, capped at 5 on screen.
+
+What I learned:
+
+- Sequencing effects on a shared timeline (anticipation → flap → card → confetti → balloons, each waiting for the previous to be mostly done) reads as one coherent moment in a way that five things firing at once never could, even though most of the individual pieces were already built.
+- I found a real bug in the balloons by checking actual computed positions, not by re-reading the CSS: they start at `bottom: -18%`, below the visible card, and with the slower rise I'd just added, they hadn't climbed far enough to clear that starting offset for several seconds - so for a while they were technically animating but invisible. Screenshots taken at exactly the wrong moments would have told me this was "working." Pulling `getBoundingClientRect()` against the card's real box at a specific timestamp is what actually caught it.
+- "Make it slower" sounds like one knob, but every layer had its own version of the problem: the flap's duration, the card's delay, confetti's start condition, and balloons' delay all needed to move together, or pieces would fight each other on what should clearly be a single moment.
+
+How I tested it:
+
+- Polled the DOM every 100ms after a tap to confirm the anticipation pause and the audio cue line up with the phase change exactly where expected, rather than trusting that the code's timing constants matched what actually renders.
+- Took screenshots at chosen points across the full sequence (anticipation, flap mid-rotation, card sliding in, confetti, balloons, fully settled) and read each one rather than assuming the last one (fully settled) being clean meant the whole sequence was fine.
+- Re-ran the full existing regression set after this rewrite: mobile horizontal overflow (still 0, both at rest and mid-celebration), the builder's "Preview as recipient" overlay still followed by a working "Download card," and `prefers-reduced-motion` opening instantly with both effect layers hidden.
+
+Related commit: `feat: redesign the celebration sequence for a slower, premium feel`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
