@@ -21,7 +21,7 @@ import {
   type ResizeCorner,
 } from "../lib/cardData";
 import { buildCardShareUrl, type SharedCardPayload } from "../lib/cardLink";
-import { compressImageToDataUrl } from "../lib/photoCompression";
+import { compressPhotoForLink } from "../lib/photoCompression";
 
 const wizardSteps = [
   { id: "recipient", label: "Recipient" },
@@ -201,6 +201,7 @@ export default function CreatePage() {
     useState<CardTemplateId>("elegant");
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [photoFileName, setPhotoFileName] = useState("");
+  const [photoUploadError, setPhotoUploadError] = useState("");
   const [movableLayouts, setMovableLayouts] = useState(cloneMovableLayouts);
   const [photoScales, setPhotoScales] = useState({ ...defaultPhotoScales });
   const [activeMovableItemId, setActiveMovableItemId] =
@@ -281,6 +282,17 @@ export default function CreatePage() {
       return;
     }
 
+    if (!file.type.startsWith("image/")) {
+      setPhotoUploadError("That file isn't an image. Choose a photo instead.");
+
+      if (photoInputRef.current) {
+        photoInputRef.current.value = "";
+      }
+
+      return;
+    }
+
+    setPhotoUploadError("");
     setPhotoPreviewUrl(URL.createObjectURL(file));
     setPhotoFileName(file.name);
   }
@@ -288,6 +300,7 @@ export default function CreatePage() {
   function handleRemovePhoto() {
     setPhotoPreviewUrl(null);
     setPhotoFileName("");
+    setPhotoUploadError("");
 
     if (photoInputRef.current) {
       photoInputRef.current.value = "";
@@ -742,8 +755,9 @@ export default function CreatePage() {
 
     try {
       const photoDataUrl = photoPreviewUrl
-        ? await compressImageToDataUrl(photoPreviewUrl)
+        ? await compressPhotoForLink(photoPreviewUrl)
         : null;
+      const photoWasDropped = Boolean(photoPreviewUrl) && !photoDataUrl;
       const payload: SharedCardPayload = {
         v: 1,
         name: recipientName,
@@ -760,16 +774,24 @@ export default function CreatePage() {
 
       setCardLink(shareUrl);
 
+      let copyStatus: string;
+
       try {
         if (!navigator.clipboard?.writeText) {
           throw new Error("Clipboard API not available.");
         }
 
         await navigator.clipboard.writeText(shareUrl);
-        setLinkStatus("Link copied to clipboard.");
+        copyStatus = "Link copied to clipboard.";
       } catch {
-        setLinkStatus("Link ready below. Copy it manually.");
+        copyStatus = "Link ready below. Copy it manually.";
       }
+
+      setLinkStatus(
+        photoWasDropped
+          ? `${copyStatus} Your photo was too large to include, so the link doesn't have it.`
+          : copyStatus,
+      );
     } catch {
       setLinkStatus("Could not create the link. Try again.");
     } finally {
@@ -1013,6 +1035,11 @@ export default function CreatePage() {
                 </div>
                 {photoFileName && (
                   <p className="photo-file-name">{photoFileName}</p>
+                )}
+                {photoUploadError && (
+                  <p className="photo-upload-error" role="alert">
+                    {photoUploadError}
+                  </p>
                 )}
               </section>
             )}
