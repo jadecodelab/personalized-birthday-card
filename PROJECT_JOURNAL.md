@@ -239,6 +239,35 @@ What I learned:
 
 Related commit: `feat: add preview guide and photo sizing`
 
+### June 23, 2026: Splitting Builder and Recipient Routes
+
+On June 23, 2026, I created a new branch, `envelope-feature`, off main to work on this phase without touching the working app on `main`. This is also the point where I switched assistants, from Codex to Claude Code, for this project. I want to be upfront about that the same way I was about using Codex: the working process hasn't changed. I still decide what gets built, review every change before it's committed, and test in the browser myself.
+
+Before any envelope animation, sound, or shareable link could be built, the app needed two separate experiences instead of one. Up to this point, `App.tsx` was a single file that handled the entire wizard, every drag/resize/pinch interaction, the PNG export pipeline, and the live preview all at once. A recipient opening a finished card was always going to need a much lighter experience than someone building one, so the first step of this phase was carving out that boundary before adding anything new on top of it.
+
+I added a router and split the app into a `/create` builder route and a `/card` recipient route. The card's visual markup (the graphics, ribbon, photo frame, and message) moved into its own `CardPreview` component so both routes render the same card instead of keeping two copies in sync. `CardPreview` takes an `interactive` flag: the builder gets full drag-and-drop and resize exactly as before, while the recipient route renders the same visual statically, with no drag handles. For this commit, `/card` shows a sample card rather than a real one, since shareable links (passing an actual finished card to that route) is its own piece of work still to come.
+
+What changed:
+
+- Added `react-router-dom` and a router shell in `App.tsx` with `/`, `/create`, and `/card` routes (`/` redirects to `/create`).
+- Moved the wizard, all interaction state, and the export pipeline into `src/pages/CreatePage.tsx`, unchanged in behavior.
+- Extracted the card's visual markup into `src/components/CardPreview.tsx`, reused by both routes.
+- Added `src/pages/CardPage.tsx`, a static recipient view rendering a sample card.
+- Moved shared constants and types (templates, message presets, default layouts) into `src/lib/cardData.ts` so both routes can use them without duplication.
+
+What I learned:
+
+- Splitting a monolith is its own task, separate from the feature it's in service of. Doing the route split as its own commit, with zero behavior change to the builder, made it easy to verify nothing broke before any new feature touched the code.
+- A shared presentational component (`CardPreview`) is a cleaner seam for "the recipient sees a different version of this" than branching logic inside one big component.
+
+How I tested it:
+
+- Ran `npm run build` to confirm the new file layout still type-checks.
+- Ran the dev server and walked through the builder wizard end to end, dragging stickers and resizing the photo, to confirm no regression from the original single-file version.
+- Visited `/card` directly and confirmed it renders a static sample card with no resize handles or drag behavior.
+
+Related commit: `feat: split builder into /create and /card routes`
+
 The main ideas are:
 
 - Add a recipient-facing envelope opening animation.
