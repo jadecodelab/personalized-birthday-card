@@ -426,6 +426,35 @@ Related commit: `feat: confetti burst on envelope open`
 
 This closes out every idea from the original roadmap: envelope animation, sound, shareable links (re-scoped for speed), mobile usability, hardening, and now confetti. What's left, if this ever needs to grow past a demo, is revisiting real backend storage for shareable links — shorter links, no size limit on the photo, and real per-card link previews with the actual photo, none of which are possible with the current no-backend approach.
 
+### June 23, 2026: Builder UI Pass
+
+With the recipient side (envelope, sound, confetti, the real card) feeling polished, I took a step back and asked for honest feedback on the builder side, since I'd been heads-down on features and hadn't really looked at it critically in a while. The feedback was specific, not generic: the builder panel had a lot of dead space on most steps, every button in the app was the same pink with no sense of which action mattered most, the Preview step had almost no content of its own, and — the one I liked most — the person *building* the card never got to experience the envelope/chime/confetti moment unless they pasted their own link into a new tab.
+
+I agreed with all of it, and added two more: drop the "Share card" button entirely (Download plus the link feature cover that need now), and make the dark preview panel background feel less flat.
+
+What changed:
+
+- Removed "Share card"/"Share" and the Web Share API code behind them — Download and Create card link cover what Share was doing.
+- Added "Preview as recipient" on the Preview step: it opens the actual `EnvelopeReveal` + `CardPreview` experience, using whatever I've built so far, right inside the builder, no link required. This gave the Preview step real content for the first time, and doubles as a way to sanity-check a card before sharing it for real.
+- Demoted "Download card" to a secondary, outlined style so "Create card link" reads as the headline action on that step.
+- Vertically centered each step's content in the builder panel instead of leaving it stuck at the top with empty space below — most steps just don't have much content, and centering makes that read as a calm layout instead of an unfinished one.
+- Gave the dark preview panel background a few soft layered gradients instead of one flat color.
+
+What I learned:
+
+- Asking for feedback on my own work, instead of only reacting to what looked obviously broken, surfaced things I'd stopped noticing because I'd been looking at the same screens for hours.
+- The empty-space problem and the "Preview step has nothing in it" problem turned out to be the same problem solved by the same fix — adding real content to Preview made it worth keeping as its own step, which I almost solved by just removing the step instead.
+- Reusing a component (`EnvelopeReveal`) in a second context (the builder, not just the recipient route) immediately surfaced a real bug: the overlay it lives in bled across the whole mobile page because `.preview-panel` switches to `position: static` under 900px, and `position: absolute; inset: 0` needs a positioned ancestor to mean what I wanted it to mean. Changing that one breakpoint rule to `position: relative` fixed it without giving up the reason it was static-ish in the first place (canceling the desktop sticky behavior).
+- A mid-test screenshot that looks visually wrong (a couple of my screenshots rendered oddly small) isn't automatically a real bug — checking the actual computed layout sizes before chasing it confirmed it was a screenshot-capture timing quirk, not the app.
+
+How I tested it:
+
+- Walked the full wizard on desktop, opened "Preview as recipient," confirmed the envelope/chime/confetti experience plays correctly using live in-progress data, closed it, and confirmed Download still works afterward (the card's DOM reference doesn't get disturbed by the overlay mounting on top of it).
+- Confirmed zero "Share" buttons remain anywhere in the app.
+- Repeated the same flow on an iPhone-sized mobile viewport and caught the overlay bleeding past the preview panel before fixing it, then reran the mobile check clean.
+
+Related commit: `feat: UI polish - remove Share, preview-as-recipient, layout/background`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
