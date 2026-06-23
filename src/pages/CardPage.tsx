@@ -1,4 +1,5 @@
 import CardPreview from "../components/CardPreview";
+import EnvelopeReveal from "../components/EnvelopeReveal";
 import {
   cardTemplates,
   defaultMovableLayouts,
@@ -45,16 +46,18 @@ export default function CardPage() {
             This is a demo card. Open a real card link to see one made for you.
           </p>
         )}
-        <CardPreview
-          interactive={false}
-          templateId={templateId}
-          movableLayout={movableLayout}
-          photoScale={photoScale}
-          photoPreviewUrl={photoPreviewUrl}
-          previewName={previewName}
-          previewBirthday={previewBirthday}
-          message={message}
-        />
+        <EnvelopeReveal recipientName={previewName}>
+          <CardPreview
+            interactive={false}
+            templateId={templateId}
+            movableLayout={movableLayout}
+            photoScale={photoScale}
+            photoPreviewUrl={photoPreviewUrl}
+            previewName={previewName}
+            previewBirthday={previewBirthday}
+            message={message}
+          />
+        </EnvelopeReveal>
       </aside>
     </main>
   );
