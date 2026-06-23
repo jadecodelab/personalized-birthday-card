@@ -477,6 +477,33 @@ How I tested it:
 
 Related commit: `feat: play Happy Birthday tune on envelope open`
 
+### June 23, 2026: Making It Upbeat, and Floating Balloons
+
+The melody was correct but it sounded calm, almost like a music box — not the celebratory feeling I actually wanted. I asked for it to be upbeat and fun, and to bring back an idea from the original roadmap that never got built: floating balloons alongside the confetti.
+
+For the music, I didn't reach for an audio file — same reasoning as before, no asset to license or load. Instead I sped the tempo up (about 5.5s instead of 7.5s for the same notes), switched the melody's oscillator from a plain sine wave to a triangle wave for a brighter tone, and added a simple root/fifth bass pulse underneath at a lower volume — the classic "oom-pah" pattern that gives a lot of festive/party music its bounce, without needing to model real chords or harmony.
+
+For the balloons, I reused the exact same pattern as the confetti burst: a fixed array of pieces, each with CSS custom properties for position, color, delay, and a bit of horizontal drift, animated with one keyframe and gated behind `prefers-reduced-motion` right alongside the confetti.
+
+What changed:
+
+- `playTone` in `src/lib/sound.ts` now accepts `gain`/`waveform` options, so the melody and the new bass layer can sound different from each other instead of being identical sine beeps.
+- `playBirthdayTune` now schedules the melody on a triangle wave plus a steady low root/fifth bass pulse for the whole length of the tune.
+- `EnvelopeReveal` renders a new `.balloon-burst` layer of seven CSS balloon shapes (ellipse plus a thin string) that rise and sway on open, similar to but visually distinct from the confetti.
+
+What I learned:
+
+- "Make it upbeat" turned out to mean three separate, fairly small levers — tempo, timbre, and a rhythm layer — rather than one big change. None of them individually would have done much; together they changed the character a lot.
+- Reusing the confetti's exact pattern for balloons (array of pieces + CSS custom properties + one keyframe) made this fast to build, since the hard part — staggering pieces, respecting reduced motion, picking varied colors — was already solved once.
+- Checking "did the note count change correctly" is something I can verify precisely (counted oscillators), but checking "does this sound more fun" isn't something I can verify myself at all — that one's genuinely for a human to judge by actually listening.
+
+How I tested it:
+
+- Counted oscillators again after the change: 51 per play (25 melody notes + 26 bass beats), confirming the bass layer is actually scheduled, not just present in the code.
+- Confirmed all 7 balloon pieces render, are visually distinct floating shapes mid-animation, and fade to zero opacity by the end, with no console errors - on both the real card link and the builder's recipient preview.
+
+Related commits: `feat: make the birthday tune upbeat - faster tempo, brighter tone, bass`, `feat: add floating balloon animation on envelope open`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
