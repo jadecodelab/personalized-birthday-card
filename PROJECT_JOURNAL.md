@@ -577,6 +577,32 @@ How I tested it:
 
 Related commit: `feat: delay music after card appears, balloons blow up post-confetti`
 
+### June 23, 2026: Stickers and Tags Become Opt-In
+
+A real builder-side change this time, not the recipient experience. Every card used to start with all five decorative items - cake, flowers, balloons, gift, the Happy Birthday ribbon - already placed on it, in a per-template default arrangement. The ask was to flip that: start blank, and let the person building the card choose which of those they actually want from a picker under Customize, then drag whichever ones they add anywhere on the card.
+
+Before touching any code, I wrote out what I thought the change involved and asked three scope questions, since this one had real branching decisions: should "variety" mean the existing five or brand-new artwork, can the same sticker be added more than once, and does "tags" include the date badge or just the ribbon. All three came back as the simpler option, which kept this from growing into a much bigger feature than asked for.
+
+What changed:
+
+- A new `activeStickerIds` list in the builder's state, starting empty. It's global, not per-template, so switching styles doesn't wipe out what you've already added.
+- `CardPreview` now renders each sticker/tag conditionally instead of unconditionally - everything else about how an item looks or drags is untouched.
+- Toggling a sticker off only hides it. Its position was already being tracked in `movableLayouts` regardless of visibility, so toggling it back on puts it right back where it was dragged, not back at the template's default spot.
+- Shareable links now carry which stickers the sender picked, so the recipient sees exactly that set - not a generic default. The no-link demo card still shows all five, so it still reads as a finished example instead of a bare one.
+
+What I learned:
+
+- Asking scope questions before writing code paid off immediately: the "could the data model need to support multiple copies of the same sticker" question, if answered the harder way, would have meant reworking positions from a fixed set of named slots into a list of placed instances - a much bigger change hiding behind a casually-phrased request.
+- This is the first feature in this project where I changed default behavior for everyone, not just added something new - worth being more careful that I checked both the no-link demo path and the real shared-link path, since they now genuinely diverge (all five vs. only what was chosen) on purpose.
+
+How I tested it:
+
+- Confirmed a brand new card renders zero stickers, then that toggling each one in the picker adds/removes it from the live preview.
+- Dragged a sticker, toggled it off, toggled it back on, and confirmed its position - not the template default - by reading the actual computed style values, not just eyeballing it.
+- Checked that the builder's "Preview as recipient" overlay and a real generated card link both show exactly the toggled-on set, and that the no-link demo card still shows all five.
+
+Related commit: `feat: make stickers and tags opt-in instead of always-on`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
