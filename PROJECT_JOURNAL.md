@@ -455,6 +455,28 @@ How I tested it:
 
 Related commit: `feat: UI polish - remove Share, preview-as-recipient, layout/background`
 
+### June 23, 2026: Happy Birthday Tune on Open
+
+The short two-note chime on open was a placeholder for the real thing: actual birthday music. I upgraded it to a synthesized rendition of "Happy Birthday to You" instead of finding an audio file somewhere, for the same reason the chime was synthesized in the first place — no asset to license, nothing to load. It's also worth knowing the song itself has been public domain in the US since a 2015 court ruling found Warner/Chappell's copyright claim invalid, so even using a recording would have been fine; synthesizing it just kept the approach consistent with everything else in this phase.
+
+It's 25 notes across four phrases, built on the same oscillator-plus-gain-envelope approach as the chime, just scheduled in sequence instead of two overlapping notes. It plays once, about 7.5 seconds, when the envelope is tapped — same trigger point as before, so it still rides the same user gesture that satisfies browsers' audio autoplay rules.
+
+What changed:
+
+- Replaced `playOpenChime` in `src/lib/sound.ts` with `playBirthdayTune`, a 25-note melody table plus a small scheduling loop.
+- `EnvelopeReveal` now calls the tune instead of the chime on open. Since the builder's "Preview as recipient" reuses the same component, the tune plays there too, for free.
+
+What I learned:
+
+- Verifying "the melody plays" needed more than checking the code looked musically right. I instrumented `AudioContext.prototype.createOscillator` in the browser to actually count how many notes got scheduled, confirmed it was 25, and ran the same check through both entry points (the real `/card` link and the builder's recipient preview) rather than assuming the second one would just work because it shares the component.
+
+How I tested it:
+
+- Counted scheduled notes via the oscillator instrumentation above: 25 on the real card link, 25 via the builder's "Preview as recipient."
+- Confirmed the card stays revealed and stable for several seconds after the tune finishes, with no console errors in either path.
+
+Related commit: `feat: play Happy Birthday tune on envelope open`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
