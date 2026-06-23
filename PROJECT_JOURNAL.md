@@ -296,10 +296,59 @@ How I tested it:
 
 Related commit: `feat: shareable card links with the real photo, no backend`
 
+### June 23, 2026: Envelope-Opening Animation
+
+With `/card` able to show a real card and the real photo, the next piece was making the recipient's first moment feel like opening an actual gift instead of just loading a webpage. I built a self-contained `EnvelopeReveal` component that wraps the card on `/card`: a closed envelope addressed "To: [name]" sits in front of the real card until tapped, then the flap flips open and the whole envelope fades away to reveal the card underneath. I kept this CSS-only, no animation library, for the same reason the link feature stayed backend-free — it's fast to build and has nothing extra to install.
+
+Looking at it on screen, not just reading the CSS, caught a real bug: the first version rotated the flap open but never faded it, so after the rotation finished a thin sliver of the flap was still visible, overlapping the top of the revealed card. The fix was fading the flap's opacity alongside its rotation, not relying on the rotation alone to make it disappear.
+
+What changed:
+
+- Added `EnvelopeReveal` (`src/components/EnvelopeReveal.tsx`), used only on `/card` — the builder's live preview is untouched, no envelope there.
+- Closed state: envelope addressed to the recipient with a "Tap to open" prompt.
+- Open state: flap flips via a CSS `rotateX` transform, then the whole envelope fades while the real card scales and fades in underneath.
+- Respects `prefers-reduced-motion` — the open state applies instantly with no transition for anyone who has that setting on.
+
+What I learned:
+
+- A transform without a matching opacity fade can leave a visible artifact once something rotates past edge-on to the camera. Looked fine in my head; wasn't fine on screen until I actually looked.
+- Self-contained UI state (the envelope owns its own open/closed flag) is a clean fit for an interaction that's purely visual and doesn't need to affect anything else in the app.
+
+How I tested it:
+
+- Built a real card with a photo, generated its link, opened it like a recipient would, and confirmed the envelope appears closed first, opens on tap, and reveals the actual card and photo underneath.
+- Took screenshots before, mid-open, and after specifically to catch the flap artifact, since that bug was invisible just from reading the CSS.
+
+Related commit: `feat: envelope-opening animation on the recipient view`
+
+### June 23, 2026: Sound Effect on Envelope Open
+
+Sound was next. Downloading and licensing an audio file felt like more setup than the feature was worth at demo speed, so the chime is synthesized in the browser instead, using the Web Audio API: two short sine-wave notes shaped with a volume envelope. No asset file, nothing to license, nothing to load.
+
+The one real constraint here is that browsers block audio until a genuine user gesture creates or resumes the `AudioContext`. Calling the chime function synchronously inside the same click handler that opens the envelope satisfies that automatically — no special-casing needed.
+
+What changed:
+
+- Added `src/lib/sound.ts` with a `playOpenChime()` function that synthesizes a two-note chime via Web Audio oscillators and gain envelopes.
+- `EnvelopeReveal` calls it the moment the envelope is tapped, right as the open animation starts.
+- Wrapped in a `try`/`catch` so a browser without Web Audio support just opens the envelope silently instead of breaking anything.
+
+What I learned:
+
+- Not every "add a sound effect" ask needs an audio file. For a short UI chime, synthesizing it is faster and sidesteps any licensing question entirely.
+- I confirmed the `AudioContext` actually gets created at the moment of the click rather than just trusting the code looked right on read-through.
+
+How I tested it:
+
+- Verified an `AudioContext` is created exactly when the envelope is tapped, with no console errors, and that the card still reveals correctly with the sound wired in.
+- Listening for the sound itself isn't something I can verify from code or screenshots — that part's a manual check, on my own machine.
+
+Related commit: `feat: play a chime when the envelope opens`
+
 The remaining ideas from the original roadmap:
 
-- Add a recipient-facing envelope opening animation.
-- Add sound effects and confetti or floating balloon animations.
+- Mobile usability pass on `/card`: tap target sizing for the envelope, animation performance on lower-end phones, and Open Graph tags so a shared link previews nicely in messaging apps.
+- Add confetti or floating balloon animations.
 - Revisit real backend storage for shareable links if this card ever needs to scale past a demo (shorter links, no size limit on the photo).
 
 These features would make the app feel more complete while still building on the foundation that already works.
