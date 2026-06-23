@@ -669,12 +669,54 @@ textarea {
   transform: translateY(40px) scale(0.92);
 }
 
+.confetti-burst {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -8%;
+  left: var(--piece-left);
+  width: 8px;
+  height: 14px;
+  background: var(--piece-color);
+  border-radius: 2px;
+  opacity: 0;
+}
+
+.envelope-reveal--open .confetti-piece {
+  animation: confetti-fall 1.3s ease-in forwards;
+  animation-delay: var(--piece-delay);
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(420px) rotate(var(--piece-rotate));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .envelope-flap,
   .envelope-back,
   .envelope-front,
   .envelope-reveal-card {
     transition: none;
+  }
+
+  .confetti-burst {
+    display: none;
   }
 }
 
