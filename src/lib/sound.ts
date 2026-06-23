@@ -17,15 +17,17 @@ function playTone(
   frequency: number,
   startTime: number,
   duration: number,
+  options: { gain?: number; waveform?: OscillatorType } = {},
 ) {
+  const { gain = 0.25, waveform = "sine" } = options;
   const oscillator = context.createOscillator();
   const gainNode = context.createGain();
 
-  oscillator.type = "sine";
+  oscillator.type = waveform;
   oscillator.frequency.value = frequency;
 
   gainNode.gain.setValueAtTime(0, startTime);
-  gainNode.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
+  gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.02);
   gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
   oscillator.connect(gainNode);
@@ -46,9 +48,12 @@ const NOTE = {
   C5: 523.25,
 };
 
-const EIGHTH = 0.15;
-const QUARTER = 0.3;
-const HALF = 0.6;
+const EIGHTH = 0.11;
+const QUARTER = 0.22;
+const HALF = 0.44;
+
+const BASS_ROOT = 130.81; // C3
+const BASS_FIFTH = 196.0; // G3
 
 // A short, recognizable rendition of "Happy Birthday to You" - public domain
 // since the 2015 US court ruling that Warner/Chappell's copyright claim was
@@ -88,11 +93,30 @@ const HAPPY_BIRTHDAY_MELODY: Array<[frequency: number, duration: number]> = [
 export function playBirthdayTune() {
   try {
     const context = getAudioContext();
-    let time = context.currentTime;
+    const startTime = context.currentTime;
+    let time = startTime;
 
     for (const [frequency, duration] of HAPPY_BIRTHDAY_MELODY) {
-      playTone(context, frequency, time, duration * 0.85);
+      playTone(context, frequency, time, duration * 0.8, {
+        gain: 0.22,
+        waveform: "triangle",
+      });
       time += duration;
+    }
+
+    // A simple root/fifth "oom-pah" bass pulse under the melody for a
+    // fuller, more festive feel than a single bare melody line.
+    const totalDuration = time - startTime;
+    let bassTime = startTime;
+    let isRoot = true;
+
+    while (bassTime < startTime + totalDuration) {
+      playTone(context, isRoot ? BASS_ROOT : BASS_FIFTH, bassTime, QUARTER * 0.8, {
+        gain: 0.1,
+        waveform: "sine",
+      });
+      bassTime += QUARTER;
+      isRoot = !isRoot;
     }
   } catch {
     // Web Audio isn't available in this browser - the envelope still opens silently.
