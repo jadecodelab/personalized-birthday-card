@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { playOpenChime } from "../lib/sound";
+import { playBirthdayTune } from "../lib/sound";
 
 type EnvelopeRevealProps = {
   recipientName: string;
@@ -32,7 +32,7 @@ export default function EnvelopeReveal({
   const [isOpen, setIsOpen] = useState(false);
 
   function handleOpen() {
-    playOpenChime();
+    playBirthdayTune();
     setIsOpen(true);
   }
 
