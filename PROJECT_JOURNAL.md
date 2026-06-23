@@ -374,13 +374,38 @@ How I tested it:
 
 Related commit: `feat: mobile usability pass and generic Open Graph tags`
 
+### June 23, 2026: Hardening the No-Backend Approach
+
+The original roadmap's last phase was scalability and hardening, written back when I was still planning a real backend: storage expiry, rate limiting on a public write endpoint, that kind of thing. None of that applies anymore, since there's no backend and no write endpoint. Rather than skip the phase entirely, I re-scoped it to what's actually real for the approach I ended up shipping: making sure the link-encoding trick doesn't quietly break on inputs I didn't test by hand.
+
+Two gaps stood out. First, the photo upload only had the browser's `accept="image/*"` hint, which is a suggestion, not an enforcement — nothing stopped someone from picking a non-image file and the app silently treating it like a photo. Second, and more important, `compressPhotoForLink` had no upper bound at all. Every sample photo I'd tested with happened to compress to well under 15KB, but I had no actual evidence that would hold for every possible photo, and I didn't want to find out from a recipient with a broken link instead of from my own testing.
+
+What changed:
+
+- Photo upload now checks the file's actual MIME type and shows a clear message instead of accepting a non-image file.
+- `compressPhotoForLink` now retries at progressively smaller dimensions and quality (320px/0.6 → 240px/0.5 → 180px/0.4) and gives up rather than ever shipping a photo over 40KB in the link — comfortably above the worst case I actually measured, but a real backstop instead of an assumption.
+- If every attempt is still too large, the link is created without the photo, and the status message says so honestly instead of pretending it worked.
+
+What I learned:
+
+- "I tested it with a few photos and it was fine" is not the same as "it has a guaranteed upper bound." The first is a sample; the second is a guarantee. Only one of those is something I can stand behind for a recipient I haven't met.
+- A re-scoped phase is still worth doing under its original name, even when the original plan doesn't apply anymore. The intent behind "hardening" survived the architecture change, even though the specific roadmap items didn't.
+- I couldn't trigger the drop-the-photo path with any of my real sample images, so I temporarily forced the size cap down to confirm that exact code path actually runs and behaves correctly, then put the real number back. Code that only theoretically works isn't tested.
+
+How I tested it:
+
+- Uploaded a non-image file and confirmed it's rejected with a clear message, with no photo state silently set.
+- Generated a card link with each sample photo and confirmed the link still includes the real photo with the actual compression cap in place.
+- Temporarily set the cap absurdly low, regenerated a link, and confirmed the photo gets dropped, the card still renders correctly with the right name and message, and the status message explains what happened — then restored the real value and re-confirmed normal behavior.
+
+Related commit: `feat: harden photo upload and link compression`
+
 The remaining ideas from the original roadmap:
 
 - Add confetti or floating balloon animations.
 - Revisit real backend storage for shareable links if this card ever needs to scale past a demo (shorter links, no size limit on the photo, real link previews with the actual photo).
-- Basic guardrails on photo size before it gets compressed into a link, since there's currently no upper bound on what someone could try to upload.
 
-These features would make the app feel more complete while still building on the foundation that already works.
+This phase closes out the original five-part plan: envelope animation, sound, shareable links, mobile usability, and hardening are all in place, with the architecture honestly adjusted along the way for speed. These last two ideas would make the app feel more complete while still building on the foundation that already works.
 
 ## What I Learned So Far
 
