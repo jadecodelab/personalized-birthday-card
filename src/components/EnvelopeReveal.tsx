@@ -25,6 +25,16 @@ const CONFETTI_PIECES = [
   { left: "90%", color: "#4d9de0", delay: "150ms", rotate: "420deg" },
 ];
 
+const BALLOON_PIECES = [
+  { left: "6%", color: "#ff6b94", delay: "0ms", drift: "16px", tilt: "10deg" },
+  { left: "20%", color: "#4d9de0", delay: "150ms", drift: "-14px", tilt: "-8deg" },
+  { left: "34%", color: "#ffcf3f", delay: "80ms", drift: "12px", tilt: "12deg" },
+  { left: "48%", color: "#31c6b4", delay: "220ms", drift: "-18px", tilt: "-10deg" },
+  { left: "62%", color: "#ff8fb3", delay: "40ms", drift: "14px", tilt: "9deg" },
+  { left: "76%", color: "#ffd15c", delay: "180ms", drift: "-12px", tilt: "-12deg" },
+  { left: "90%", color: "#59c6a4", delay: "100ms", drift: "16px", tilt: "8deg" },
+];
+
 export default function EnvelopeReveal({
   recipientName,
   children,
@@ -70,6 +80,23 @@ export default function EnvelopeReveal({
                 "--piece-color": piece.color,
                 "--piece-delay": piece.delay,
                 "--piece-rotate": piece.rotate,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </div>
+      <div className="balloon-burst" aria-hidden="true">
+        {BALLOON_PIECES.map((piece, index) => (
+          <span
+            key={index}
+            className="balloon-piece"
+            style={
+              {
+                "--balloon-left": piece.left,
+                "--balloon-color": piece.color,
+                "--balloon-delay": piece.delay,
+                "--balloon-drift": piece.drift,
+                "--balloon-tilt": piece.tilt,
               } as CSSProperties
             }
           />

@@ -751,6 +751,57 @@ textarea {
   }
 }
 
+.balloon-burst {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.balloon-piece {
+  position: absolute;
+  bottom: -16%;
+  left: var(--balloon-left);
+  width: 22px;
+  height: 28px;
+  background: var(--balloon-color);
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  box-shadow: inset -3px -3px 0 rgb(0 0 0 / 0.06);
+  opacity: 0;
+}
+
+.balloon-piece::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 16px;
+  background: rgb(255 255 255 / 0.55);
+  transform: translateX(-50%);
+}
+
+.envelope-reveal--open .balloon-piece {
+  animation: balloon-float 2.4s ease-out forwards;
+  animation-delay: var(--balloon-delay);
+}
+
+@keyframes balloon-float {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  12% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-480px) translateX(var(--balloon-drift))
+      rotate(var(--balloon-tilt));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .envelope-flap,
   .envelope-back,
@@ -759,7 +810,8 @@ textarea {
     transition: none;
   }
 
-  .confetti-burst {
+  .confetti-burst,
+  .balloon-burst {
     display: none;
   }
 }
