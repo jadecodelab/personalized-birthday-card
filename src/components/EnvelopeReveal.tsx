@@ -6,58 +6,76 @@ type EnvelopeRevealProps = {
   children: ReactNode;
 };
 
+type RevealPhase = "closed" | "anticipating" | "open";
+
+// Gives the tap a beat to register as "something is about to happen" before
+// the envelope actually moves - skipped entirely for prefers-reduced-motion,
+// since a silent pause with nothing animating reads as lag, not anticipation.
+const ANTICIPATION_PAUSE_MS = 450;
+
+// Two small clusters near the card's left/right edges rather than confetti
+// raining across the full width - a "burst from both sides," not a downpour.
 const CONFETTI_PIECES = [
-  { left: "6%", color: "#ff6b94", delay: "0ms", rotate: "420deg" },
-  { left: "14%", color: "#ffcf3f", delay: "60ms", rotate: "600deg" },
-  { left: "22%", color: "#31c6b4", delay: "20ms", rotate: "480deg" },
-  { left: "30%", color: "#4d9de0", delay: "120ms", rotate: "660deg" },
-  { left: "38%", color: "#ff8fb3", delay: "40ms", rotate: "540deg" },
-  { left: "46%", color: "#ffd15c", delay: "100ms", rotate: "420deg" },
-  { left: "54%", color: "#59c6a4", delay: "10ms", rotate: "600deg" },
-  { left: "62%", color: "#ff6b94", delay: "80ms", rotate: "480deg" },
-  { left: "70%", color: "#4d9de0", delay: "140ms", rotate: "660deg" },
-  { left: "78%", color: "#ffcf3f", delay: "30ms", rotate: "540deg" },
-  { left: "86%", color: "#31c6b4", delay: "90ms", rotate: "420deg" },
-  { left: "94%", color: "#ff8fb3", delay: "50ms", rotate: "600deg" },
-  { left: "10%", color: "#ffd15c", delay: "160ms", rotate: "480deg" },
-  { left: "50%", color: "#59c6a4", delay: "180ms", rotate: "660deg" },
-  { left: "66%", color: "#ff6b94", delay: "70ms", rotate: "540deg" },
-  { left: "90%", color: "#4d9de0", delay: "150ms", rotate: "420deg" },
+  { left: "2%", color: "#ff6b94", width: "7px", height: "12px", stagger: "0ms", burstX: "-16px", driftX: "-26px", fallY: "300px", rotate: "380deg", duration: "1.9s" },
+  { left: "8%", color: "#ffcf3f", width: "10px", height: "16px", stagger: "90ms", burstX: "-12px", driftX: "-18px", fallY: "340px", rotate: "300deg", duration: "2.1s" },
+  { left: "14%", color: "#31c6b4", width: "6px", height: "10px", stagger: "40ms", burstX: "-18px", driftX: "-22px", fallY: "280px", rotate: "420deg", duration: "1.8s" },
+  { left: "4%", color: "#4d9de0", width: "9px", height: "14px", stagger: "160ms", burstX: "-10px", driftX: "-16px", fallY: "330px", rotate: "340deg", duration: "2.0s" },
+  { left: "18%", color: "#ff8fb3", width: "8px", height: "13px", stagger: "70ms", burstX: "-14px", driftX: "-24px", fallY: "310px", rotate: "400deg", duration: "2.2s" },
+  { left: "11%", color: "#59c6a4", width: "11px", height: "17px", stagger: "200ms", burstX: "-20px", driftX: "-20px", fallY: "350px", rotate: "360deg", duration: "1.9s" },
+  { left: "92%", color: "#ff6b94", width: "7px", height: "12px", stagger: "20ms", burstX: "16px", driftX: "26px", fallY: "300px", rotate: "-380deg", duration: "1.9s" },
+  { left: "86%", color: "#ffcf3f", width: "10px", height: "16px", stagger: "110ms", burstX: "12px", driftX: "18px", fallY: "340px", rotate: "-300deg", duration: "2.1s" },
+  { left: "80%", color: "#31c6b4", width: "6px", height: "10px", stagger: "60ms", burstX: "18px", driftX: "22px", fallY: "280px", rotate: "-420deg", duration: "1.8s" },
+  { left: "96%", color: "#4d9de0", width: "9px", height: "14px", stagger: "180ms", burstX: "10px", driftX: "16px", fallY: "330px", rotate: "-340deg", duration: "2.0s" },
+  { left: "82%", color: "#ff8fb3", width: "8px", height: "13px", stagger: "50ms", burstX: "14px", driftX: "24px", fallY: "310px", rotate: "-400deg", duration: "2.2s" },
+  { left: "89%", color: "#ffd15c", width: "11px", height: "17px", stagger: "220ms", burstX: "20px", driftX: "20px", fallY: "350px", rotate: "-360deg", duration: "1.9s" },
 ];
 
+// Anchored at the bottom corners, not spread across the whole width, so they
+// rise past the card's edges instead of drifting over the message/photo.
 const BALLOON_PIECES = [
-  { left: "6%", color: "#ff6b94", delay: "0ms", drift: "16px", tilt: "10deg" },
-  { left: "20%", color: "#4d9de0", delay: "150ms", drift: "-14px", tilt: "-8deg" },
-  { left: "34%", color: "#ffcf3f", delay: "80ms", drift: "12px", tilt: "12deg" },
-  { left: "48%", color: "#31c6b4", delay: "220ms", drift: "-18px", tilt: "-10deg" },
-  { left: "62%", color: "#ff8fb3", delay: "40ms", drift: "14px", tilt: "9deg" },
-  { left: "76%", color: "#ffd15c", delay: "180ms", drift: "-12px", tilt: "-12deg" },
-  { left: "90%", color: "#59c6a4", delay: "100ms", drift: "16px", tilt: "8deg" },
+  { left: "-2%", color: "#ff6b94", stagger: "0ms", drift: "18px", tilt: "9deg", duration: "5.2s" },
+  { left: "6%", color: "#ffd15c", stagger: "550ms", drift: "-14px", tilt: "-8deg", duration: "5.8s" },
+  { left: "92%", color: "#4d9de0", stagger: "250ms", drift: "-16px", tilt: "-9deg", duration: "5.6s" },
+  { left: "98%", color: "#ff8fb3", stagger: "800ms", drift: "14px", tilt: "8deg", duration: "5.0s" },
+  { left: "12%", color: "#59c6a4", stagger: "1100ms", drift: "16px", tilt: "10deg", duration: "5.4s" },
 ];
 
 export default function EnvelopeReveal({
   recipientName,
   children,
 }: EnvelopeRevealProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [phase, setPhase] = useState<RevealPhase>("closed");
 
   function handleOpen() {
-    playBirthdayTune();
-    setIsOpen(true);
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (prefersReducedMotion) {
+      playBirthdayTune();
+      setPhase("open");
+      return;
+    }
+
+    setPhase("anticipating");
+    window.setTimeout(() => {
+      playBirthdayTune();
+      setPhase("open");
+    }, ANTICIPATION_PAUSE_MS);
   }
 
   return (
     <div
-      className={`envelope-reveal ${isOpen ? "envelope-reveal--open" : ""}`}
+      className={`envelope-reveal envelope-reveal--${phase}`}
     >
-      <div className="envelope-reveal-card" aria-hidden={!isOpen}>
+      <div className="envelope-reveal-card" aria-hidden={phase !== "open"}>
         {children}
       </div>
       <button
         type="button"
         className="envelope"
         onClick={handleOpen}
-        disabled={isOpen}
+        disabled={phase !== "closed"}
         aria-label={`Open the birthday card for ${recipientName}`}
       >
         <span className="envelope-back" aria-hidden="true" />
@@ -78,8 +96,14 @@ export default function EnvelopeReveal({
               {
                 "--piece-left": piece.left,
                 "--piece-color": piece.color,
-                "--piece-delay": piece.delay,
+                "--piece-width": piece.width,
+                "--piece-height": piece.height,
+                "--piece-stagger": piece.stagger,
+                "--piece-burst-x": piece.burstX,
+                "--piece-drift-x": piece.driftX,
+                "--piece-fall-y": piece.fallY,
                 "--piece-rotate": piece.rotate,
+                "--piece-duration": piece.duration,
               } as CSSProperties
             }
           />
@@ -94,9 +118,10 @@ export default function EnvelopeReveal({
               {
                 "--balloon-left": piece.left,
                 "--balloon-color": piece.color,
-                "--balloon-delay": piece.delay,
+                "--balloon-stagger": piece.stagger,
                 "--balloon-drift": piece.drift,
                 "--balloon-tilt": piece.tilt,
+                "--balloon-duration": piece.duration,
               } as CSSProperties
             }
           />

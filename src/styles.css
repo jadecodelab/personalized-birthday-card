@@ -602,10 +602,10 @@ textarea {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transform: scale(0.9);
+  transform: translateY(32%) scale(0.92);
   transition:
-    opacity 0.5s ease 0.35s,
-    transform 0.5s ease 0.35s;
+    opacity 0.9s ease 0.65s,
+    transform 1s cubic-bezier(0.34, 1.4, 0.64, 1) 0.65s;
 }
 
 .envelope-reveal-card .card-preview {
@@ -616,7 +616,7 @@ textarea {
 
 .envelope-reveal--open .envelope-reveal-card {
   opacity: 1;
-  transform: scale(1);
+  transform: translateY(0) scale(1);
 }
 
 .envelope {
@@ -642,8 +642,8 @@ textarea {
   inset: 0;
   border-radius: 8px;
   transition:
-    opacity 0.4s ease 0.25s,
-    transform 0.4s ease 0.25s;
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.5s,
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.5s;
 }
 
 .envelope-back {
@@ -687,10 +687,8 @@ textarea {
   background: linear-gradient(200deg, #ff8fb3, #d82768);
   clip-path: polygon(0 0, 100% 0, 50% 100%);
   transform-origin: top center;
-  transition:
-    transform 0.6s ease,
-    opacity 0.4s ease 0.3s;
   transform-style: preserve-3d;
+  box-shadow: 0 2px 6px rgb(154 72 113 / 0.18);
 }
 
 .envelope-seal {
@@ -702,15 +700,49 @@ textarea {
   box-shadow: 0 6px 14px rgb(29 36 46 / 0.25);
 }
 
+/* A brief held-breath cue before the envelope actually opens. */
+.envelope-reveal--anticipating .envelope-seal {
+  animation: envelope-seal-pulse 0.45s ease-in-out;
+}
+
+@keyframes envelope-seal-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 6px 14px rgb(29 36 46 / 0.25);
+  }
+  50% {
+    transform: scale(1.14);
+    box-shadow: 0 8px 20px rgb(184 31 85 / 0.45);
+  }
+}
+
 .envelope-reveal--open .envelope-flap {
-  transform: rotateX(-130deg);
-  opacity: 0;
+  animation: envelope-flap-open 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes envelope-flap-open {
+  0% {
+    transform: rotateX(0deg);
+    opacity: 1;
+    box-shadow: 0 2px 6px rgb(154 72 113 / 0.18);
+  }
+  55% {
+    transform: rotateX(-112deg);
+    opacity: 1;
+    box-shadow: 0 20px 34px rgb(154 72 113 / 0.36);
+  }
+  100% {
+    transform: rotateX(-150deg);
+    opacity: 0;
+    box-shadow: 0 20px 34px rgb(154 72 113 / 0);
+  }
 }
 
 .envelope-reveal--open .envelope-back,
 .envelope-reveal--open .envelope-front {
   opacity: 0;
-  transform: translateY(40px) scale(0.92);
+  transform: translateY(48px) scale(0.94);
 }
 
 .confetti-burst {
@@ -723,31 +755,36 @@ textarea {
 
 .confetti-piece {
   position: absolute;
-  top: -8%;
+  top: 4%;
   left: var(--piece-left);
-  width: 8px;
-  height: 14px;
+  width: var(--piece-width);
+  height: var(--piece-height);
   background: var(--piece-color);
   border-radius: 2px;
   opacity: 0;
 }
 
+/* Confetti only starts once the card has mostly settled into view - not at
+   the moment the envelope opens. */
 .envelope-reveal--open .confetti-piece {
-  animation: confetti-fall 1.3s ease-in forwards;
-  animation-delay: var(--piece-delay);
+  animation: confetti-fall var(--piece-duration) cubic-bezier(0.32, 0, 0.4, 1)
+    forwards;
+  animation-delay: calc(1.45s + var(--piece-stagger));
 }
 
 @keyframes confetti-fall {
   0% {
     opacity: 0;
-    transform: translateY(0) rotate(0deg);
+    transform: translate(0, 0) rotate(0deg);
   }
-  12% {
+  10% {
     opacity: 1;
+    transform: translate(var(--piece-burst-x), -4px) rotate(0deg);
   }
   100% {
     opacity: 0;
-    transform: translateY(420px) rotate(var(--piece-rotate));
+    transform: translate(var(--piece-drift-x), var(--piece-fall-y))
+      rotate(var(--piece-rotate));
   }
 }
 
@@ -761,10 +798,10 @@ textarea {
 
 .balloon-piece {
   position: absolute;
-  bottom: -16%;
+  bottom: -9%;
   left: var(--balloon-left);
-  width: 22px;
-  height: 28px;
+  width: 26px;
+  height: 33px;
   background: var(--balloon-color);
   border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
   box-shadow: inset -3px -3px 0 rgb(0 0 0 / 0.06);
@@ -777,33 +814,58 @@ textarea {
   top: 100%;
   left: 50%;
   width: 1px;
-  height: 16px;
-  background: rgb(255 255 255 / 0.55);
+  height: 18px;
+  background: rgb(255 255 255 / 0.5);
   transform: translateX(-50%);
 }
 
+/* Balloons join after the confetti burst, not alongside it, and rise slowly
+   with a gentle side-to-side sway rather than a straight climb. The
+   keyframes (not the timing-function) front-load enough rise by 10% to
+   clear the bottom-edge starting offset quickly, so they're not still
+   invisible below frame deep into their own animation. */
 .envelope-reveal--open .balloon-piece {
-  animation: balloon-float 2.4s ease-out forwards;
-  animation-delay: var(--balloon-delay);
+  animation: balloon-float var(--balloon-duration) ease forwards;
+  animation-delay: calc(1.95s + var(--balloon-stagger));
 }
 
 @keyframes balloon-float {
   0% {
     opacity: 0;
-    transform: translateY(0) translateX(0) rotate(0deg);
+    transform: translate(0, 0) rotate(0deg);
   }
-  12% {
-    opacity: 0.92;
+  10% {
+    opacity: 0.9;
+    transform: translate(0, -100px) rotate(0deg);
+  }
+  35% {
+    transform: translate(var(--balloon-drift), -240px) rotate(var(--balloon-tilt));
+  }
+  65% {
+    transform: translate(calc(var(--balloon-drift) * -1), -400px)
+      rotate(calc(var(--balloon-tilt) * -1));
+  }
+  88% {
+    opacity: 0.75;
+    transform: translate(var(--balloon-drift), -520px) rotate(var(--balloon-tilt));
   }
   100% {
     opacity: 0;
-    transform: translateY(-480px) translateX(var(--balloon-drift))
-      rotate(var(--balloon-tilt));
+    transform: translate(var(--balloon-drift), -560px) rotate(0deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .envelope-flap,
+  .envelope-reveal--open .envelope-flap {
+    animation: none;
+    transform: rotateX(-150deg);
+    opacity: 0;
+  }
+
+  .envelope-seal {
+    animation: none;
+  }
+
   .envelope-back,
   .envelope-front,
   .envelope-reveal-card {
