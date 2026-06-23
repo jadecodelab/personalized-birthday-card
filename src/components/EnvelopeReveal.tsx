@@ -13,31 +13,41 @@ type RevealPhase = "closed" | "anticipating" | "open";
 // since a silent pause with nothing animating reads as lag, not anticipation.
 const ANTICIPATION_PAUSE_MS = 450;
 
-// Two small clusters near the card's left/right edges rather than confetti
-// raining across the full width - a "burst from both sides," not a downpour.
+// Spread across the whole preview section (the confetti layer itself is
+// enlarged well past the card's own box in CSS), not just two edge clusters,
+// so it visibly rains across the full panel rather than staying confined to
+// a narrow column. Slower, bigger pieces for visibility.
 const CONFETTI_PIECES = [
-  { left: "2%", color: "#ff6b94", width: "7px", height: "12px", stagger: "0ms", burstX: "-16px", driftX: "-26px", fallY: "300px", rotate: "380deg", duration: "1.9s" },
-  { left: "8%", color: "#ffcf3f", width: "10px", height: "16px", stagger: "90ms", burstX: "-12px", driftX: "-18px", fallY: "340px", rotate: "300deg", duration: "2.1s" },
-  { left: "14%", color: "#31c6b4", width: "6px", height: "10px", stagger: "40ms", burstX: "-18px", driftX: "-22px", fallY: "280px", rotate: "420deg", duration: "1.8s" },
-  { left: "4%", color: "#4d9de0", width: "9px", height: "14px", stagger: "160ms", burstX: "-10px", driftX: "-16px", fallY: "330px", rotate: "340deg", duration: "2.0s" },
-  { left: "18%", color: "#ff8fb3", width: "8px", height: "13px", stagger: "70ms", burstX: "-14px", driftX: "-24px", fallY: "310px", rotate: "400deg", duration: "2.2s" },
-  { left: "11%", color: "#59c6a4", width: "11px", height: "17px", stagger: "200ms", burstX: "-20px", driftX: "-20px", fallY: "350px", rotate: "360deg", duration: "1.9s" },
-  { left: "92%", color: "#ff6b94", width: "7px", height: "12px", stagger: "20ms", burstX: "16px", driftX: "26px", fallY: "300px", rotate: "-380deg", duration: "1.9s" },
-  { left: "86%", color: "#ffcf3f", width: "10px", height: "16px", stagger: "110ms", burstX: "12px", driftX: "18px", fallY: "340px", rotate: "-300deg", duration: "2.1s" },
-  { left: "80%", color: "#31c6b4", width: "6px", height: "10px", stagger: "60ms", burstX: "18px", driftX: "22px", fallY: "280px", rotate: "-420deg", duration: "1.8s" },
-  { left: "96%", color: "#4d9de0", width: "9px", height: "14px", stagger: "180ms", burstX: "10px", driftX: "16px", fallY: "330px", rotate: "-340deg", duration: "2.0s" },
-  { left: "82%", color: "#ff8fb3", width: "8px", height: "13px", stagger: "50ms", burstX: "14px", driftX: "24px", fallY: "310px", rotate: "-400deg", duration: "2.2s" },
-  { left: "89%", color: "#ffd15c", width: "11px", height: "17px", stagger: "220ms", burstX: "20px", driftX: "20px", fallY: "350px", rotate: "-360deg", duration: "1.9s" },
+  { left: "2%", color: "#ff6b94", width: "9px", height: "15px", stagger: "0ms", burstX: "-12px", driftX: "-46px", fallY: "560px", rotate: "420deg", duration: "3.4s" },
+  { left: "9%", color: "#ffcf3f", width: "12px", height: "19px", stagger: "180ms", burstX: "14px", driftX: "38px", fallY: "600px", rotate: "-380deg", duration: "3.8s" },
+  { left: "16%", color: "#31c6b4", width: "8px", height: "13px", stagger: "60ms", burstX: "-10px", driftX: "-30px", fallY: "520px", rotate: "460deg", duration: "3.2s" },
+  { left: "23%", color: "#4d9de0", width: "11px", height: "17px", stagger: "300ms", burstX: "12px", driftX: "44px", fallY: "640px", rotate: "-420deg", duration: "4.0s" },
+  { left: "30%", color: "#ff8fb3", width: "7px", height: "12px", stagger: "120ms", burstX: "-14px", driftX: "-36px", fallY: "580px", rotate: "500deg", duration: "3.6s" },
+  { left: "37%", color: "#ffd15c", width: "13px", height: "20px", stagger: "400ms", burstX: "10px", driftX: "32px", fallY: "560px", rotate: "-360deg", duration: "3.5s" },
+  { left: "44%", color: "#59c6a4", width: "9px", height: "15px", stagger: "40ms", burstX: "-12px", driftX: "-42px", fallY: "620px", rotate: "440deg", duration: "3.9s" },
+  { left: "51%", color: "#ff6b94", width: "10px", height: "16px", stagger: "260ms", burstX: "14px", driftX: "40px", fallY: "590px", rotate: "-480deg", duration: "3.7s" },
+  { left: "58%", color: "#4d9de0", width: "8px", height: "13px", stagger: "150ms", burstX: "-10px", driftX: "-34px", fallY: "550px", rotate: "400deg", duration: "3.3s" },
+  { left: "65%", color: "#ffcf3f", width: "12px", height: "19px", stagger: "350ms", burstX: "16px", driftX: "46px", fallY: "650px", rotate: "-440deg", duration: "4.1s" },
+  { left: "72%", color: "#31c6b4", width: "7px", height: "12px", stagger: "80ms", burstX: "-14px", driftX: "-38px", fallY: "570px", rotate: "520deg", duration: "3.5s" },
+  { left: "78%", color: "#ff8fb3", width: "11px", height: "17px", stagger: "220ms", burstX: "12px", driftX: "36px", fallY: "600px", rotate: "-400deg", duration: "3.8s" },
+  { left: "84%", color: "#ffd15c", width: "9px", height: "15px", stagger: "20ms", burstX: "-10px", driftX: "-30px", fallY: "530px", rotate: "460deg", duration: "3.2s" },
+  { left: "90%", color: "#59c6a4", width: "10px", height: "16px", stagger: "290ms", burstX: "14px", driftX: "42px", fallY: "610px", rotate: "-420deg", duration: "3.9s" },
+  { left: "96%", color: "#ff6b94", width: "8px", height: "13px", stagger: "440ms", burstX: "-12px", driftX: "-36px", fallY: "580px", rotate: "480deg", duration: "3.6s" },
+  { left: "5%", color: "#4d9de0", width: "12px", height: "19px", stagger: "330ms", burstX: "10px", driftX: "32px", fallY: "540px", rotate: "-360deg", duration: "3.4s" },
+  { left: "26%", color: "#ffd15c", width: "9px", height: "15px", stagger: "100ms", burstX: "-14px", driftX: "-44px", fallY: "630px", rotate: "440deg", duration: "4.0s" },
+  { left: "47%", color: "#31c6b4", width: "11px", height: "17px", stagger: "470ms", burstX: "12px", driftX: "38px", fallY: "560px", rotate: "-460deg", duration: "3.5s" },
+  { left: "69%", color: "#ff8fb3", width: "8px", height: "13px", stagger: "200ms", burstX: "-10px", driftX: "-32px", fallY: "590px", rotate: "400deg", duration: "3.7s" },
+  { left: "93%", color: "#ffcf3f", width: "10px", height: "16px", stagger: "380ms", burstX: "16px", driftX: "40px", fallY: "550px", rotate: "-440deg", duration: "3.3s" },
 ];
 
-// Anchored at the bottom corners, not spread across the whole width, so they
-// rise past the card's edges instead of drifting over the message/photo.
+// Anchored just past the card's left/right edges, in the wider preview
+// section's side margins, so they read as floating beside the card.
 const BALLOON_PIECES = [
-  { left: "-2%", color: "#ff6b94", stagger: "0ms", drift: "18px", tilt: "9deg", duration: "5.2s" },
-  { left: "6%", color: "#ffd15c", stagger: "550ms", drift: "-14px", tilt: "-8deg", duration: "5.8s" },
-  { left: "92%", color: "#4d9de0", stagger: "250ms", drift: "-16px", tilt: "-9deg", duration: "5.6s" },
-  { left: "98%", color: "#ff8fb3", stagger: "800ms", drift: "14px", tilt: "8deg", duration: "5.0s" },
-  { left: "12%", color: "#59c6a4", stagger: "1100ms", drift: "16px", tilt: "10deg", duration: "5.4s" },
+  { left: "2%", color: "#ff6b94", stagger: "0ms", drift: "20px", tilt: "9deg", duration: "6.2s" },
+  { left: "12%", color: "#ffd15c", stagger: "650ms", drift: "-16px", tilt: "-8deg", duration: "6.8s" },
+  { left: "88%", color: "#4d9de0", stagger: "300ms", drift: "-18px", tilt: "-9deg", duration: "6.6s" },
+  { left: "97%", color: "#ff8fb3", stagger: "950ms", drift: "16px", tilt: "8deg", duration: "6.0s" },
+  { left: "6%", color: "#59c6a4", stagger: "1300ms", drift: "18px", tilt: "10deg", duration: "6.4s" },
 ];
 
 export default function EnvelopeReveal({

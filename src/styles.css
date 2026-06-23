@@ -745,17 +745,28 @@ textarea {
   transform: translateY(48px) scale(0.94);
 }
 
-.confetti-burst {
+/* Both burst layers are enlarged well past the card's own box - clipped at
+   the preview panel's edges (it has overflow: hidden), not the card's - so
+   confetti and balloons visibly cover the whole preview section instead of
+   staying confined to the card's narrow column. */
+.confetti-burst,
+.balloon-burst {
   position: absolute;
-  inset: 0;
+  top: -26%;
+  left: -24%;
+  right: -24%;
+  bottom: -10%;
   overflow: hidden;
   pointer-events: none;
+}
+
+.confetti-burst {
   z-index: 6;
 }
 
 .confetti-piece {
   position: absolute;
-  top: 4%;
+  top: 14%;
   left: var(--piece-left);
   width: var(--piece-width);
   height: var(--piece-height);
@@ -765,9 +776,9 @@ textarea {
 }
 
 /* Confetti only starts once the card has mostly settled into view - not at
-   the moment the envelope opens. */
+   the moment the envelope opens - and falls slowly across the whole panel. */
 .envelope-reveal--open .confetti-piece {
-  animation: confetti-fall var(--piece-duration) cubic-bezier(0.32, 0, 0.4, 1)
+  animation: confetti-fall var(--piece-duration) cubic-bezier(0.45, 0, 0.4, 1)
     forwards;
   animation-delay: calc(1.45s + var(--piece-stagger));
 }
@@ -777,9 +788,9 @@ textarea {
     opacity: 0;
     transform: translate(0, 0) rotate(0deg);
   }
-  10% {
+  8% {
     opacity: 1;
-    transform: translate(var(--piece-burst-x), -4px) rotate(0deg);
+    transform: translate(var(--piece-burst-x), 0) rotate(0deg);
   }
   100% {
     opacity: 0;
@@ -789,23 +800,37 @@ textarea {
 }
 
 .balloon-burst {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
   z-index: 7;
 }
 
 .balloon-piece {
   position: absolute;
-  bottom: -9%;
+  bottom: -6%;
   left: var(--balloon-left);
-  width: 26px;
-  height: 33px;
-  background: var(--balloon-color);
+  width: 34px;
+  height: 42px;
+  background:
+    radial-gradient(circle at 32% 26%, rgb(255 255 255 / 0.65), transparent 45%),
+    var(--balloon-color);
   border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
-  box-shadow: inset -3px -3px 0 rgb(0 0 0 / 0.06);
+  box-shadow:
+    inset -5px -5px 9px rgb(0 0 0 / 0.14),
+    0 8px 16px rgb(34 16 36 / 0.22);
   opacity: 0;
+}
+
+.balloon-piece::before {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 7px solid var(--balloon-color);
+  filter: brightness(0.82);
+  transform: translateX(-50%);
 }
 
 .balloon-piece::after {
@@ -813,10 +838,10 @@ textarea {
   position: absolute;
   top: 100%;
   left: 50%;
-  width: 1px;
-  height: 18px;
-  background: rgb(255 255 255 / 0.5);
-  transform: translateX(-50%);
+  width: 1.5px;
+  height: 30px;
+  background: rgb(255 255 255 / 0.45);
+  transform: translateX(-50%) translateY(2px);
 }
 
 /* Balloons join after the confetti burst, not alongside it, and rise slowly
@@ -826,7 +851,7 @@ textarea {
    invisible below frame deep into their own animation. */
 .envelope-reveal--open .balloon-piece {
   animation: balloon-float var(--balloon-duration) ease forwards;
-  animation-delay: calc(1.95s + var(--balloon-stagger));
+  animation-delay: calc(2.1s + var(--balloon-stagger));
 }
 
 @keyframes balloon-float {
@@ -835,23 +860,23 @@ textarea {
     transform: translate(0, 0) rotate(0deg);
   }
   10% {
-    opacity: 0.9;
-    transform: translate(0, -100px) rotate(0deg);
+    opacity: 0.95;
+    transform: translate(0, -120px) rotate(0deg);
   }
   35% {
-    transform: translate(var(--balloon-drift), -240px) rotate(var(--balloon-tilt));
+    transform: translate(var(--balloon-drift), -280px) rotate(var(--balloon-tilt));
   }
   65% {
-    transform: translate(calc(var(--balloon-drift) * -1), -400px)
+    transform: translate(calc(var(--balloon-drift) * -1), -460px)
       rotate(calc(var(--balloon-tilt) * -1));
   }
   88% {
     opacity: 0.75;
-    transform: translate(var(--balloon-drift), -520px) rotate(var(--balloon-tilt));
+    transform: translate(var(--balloon-drift), -600px) rotate(var(--balloon-tilt));
   }
   100% {
     opacity: 0;
-    transform: translate(var(--balloon-drift), -560px) rotate(0deg);
+    transform: translate(var(--balloon-drift), -650px) rotate(0deg);
   }
 }
 
