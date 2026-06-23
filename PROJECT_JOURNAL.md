@@ -400,12 +400,31 @@ How I tested it:
 
 Related commit: `feat: harden photo upload and link compression`
 
-The remaining ideas from the original roadmap:
+### June 23, 2026: Confetti on Open
 
-- Add confetti or floating balloon animations.
-- Revisit real backend storage for shareable links if this card ever needs to scale past a demo (shorter links, no size limit on the photo, real link previews with the actual photo).
+The last item on the original roadmap was confetti or floating balloon animations. With the envelope, the chime, and the reveal already working, this was the smallest possible addition that still made the moment feel a little more like a celebration: a short burst of confetti pieces falling and fading right as the envelope opens, on top of the flap animation and the chime that were already there.
 
-This phase closes out the original five-part plan: envelope animation, sound, shareable links, mobile usability, and hardening are all in place, with the architecture honestly adjusted along the way for speed. These last two ideas would make the app feel more complete while still building on the foundation that already works.
+I kept this consistent with everything else in this phase: CSS-only, no animation library, decorative and `aria-hidden`, and skipped entirely for anyone with `prefers-reduced-motion` set, rather than just slowed down. Sixteen pieces with hardcoded (not randomized) positions, colors, and stagger delays — randomizing them would have looked the same to a viewer but added complexity for no real benefit here.
+
+What changed:
+
+- Added a `confetti-burst` layer inside `EnvelopeReveal`, rendered above the envelope and the card.
+- Sixteen small pieces fall and rotate with staggered delays over about 1.3 seconds, triggered by the same `envelope-reveal--open` class toggle that drives the flap and card-reveal transitions.
+- Confetti is skipped entirely under `prefers-reduced-motion`, matching how the rest of the envelope's motion is handled.
+
+What I learned:
+
+- The smallest version of an idea is often enough. "Confetti or floating balloons" didn't need both, and didn't need to be physics-accurate — a believable fall-and-fade with a bit of stagger reads as confetti without much code.
+- Checking a mid-animation screenshot can look like a bug (the card looked washed-out, with envelope text still faintly visible through it) when it's actually just an honest snapshot of two transitions crossing over each other. Looking at the *settled* end state, not just one frame, is what actually tells you if something's wrong.
+
+How I tested it:
+
+- Opened a real card link and captured the moment mid-fall (confetti visible, card and envelope still cross-fading) and well after the animation ends, confirming the final state is clean with no leftover artifacts.
+- Confirmed no console errors with the confetti layer added.
+
+Related commit: `feat: confetti burst on envelope open`
+
+This closes out every idea from the original roadmap: envelope animation, sound, shareable links (re-scoped for speed), mobile usability, hardening, and now confetti. What's left, if this ever needs to grow past a demo, is revisiting real backend storage for shareable links — shorter links, no size limit on the photo, and real per-card link previews with the actual photo, none of which are possible with the current no-backend approach.
 
 ## What I Learned So Far
 
