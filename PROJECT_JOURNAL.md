@@ -554,6 +554,29 @@ How I tested it:
 
 Related commit: `feat: confetti spans the whole preview section, nicer slower balloons`
 
+### June 23, 2026: Finishing the Sequence's Rhythm
+
+Three smaller, precise notes on the same sequence: the music was firing too early (right as the envelope opens, before the recipient has actually seen the card), the balloons were overlapping with confetti instead of following it, and there were too many balloons for what's supposed to be a closing moment.
+
+What changed:
+
+- Music now waits 3 seconds after the card has actually settled into view, instead of starting the instant the envelope begins opening. I detached `playBirthdayTune` from the phase-change timeout entirely and gave it its own delay (card settle time, which already exists as a CSS timing constant, plus the new 3s pause).
+- Balloons now wait until every single confetti piece has completely finished falling - not just until the initial burst - before they start. I had to actually calculate the latest confetti piece's full end time (its stagger plus its duration) rather than guess at a delay that felt about right.
+- Cut from 5 balloons to 2, but much bigger (58x72px, up from 34x42px) - they're a deliberate final beat now, not a small crowd in the background.
+
+What I learned:
+
+- "After all the confetti" is a precise condition, not a vibe - I had to actually sum stagger + duration across all 20 confetti pieces to find the true latest finish time (5.9s) rather than eyeball a delay that looked roughly right. Guessing here would have meant some confetti was still visibly falling when balloons started, defeating the entire point of the request.
+- Decoupling the music's timing from the visual phase change (rather than firing it inside the same timeout) made it easy to give it an independent delay without having to also shift when the envelope itself opens.
+
+How I tested it:
+
+- Instrumented oscillator creation to find the exact moment the first note plays, confirmed it lines up with card-settle-time plus 3 seconds (and just 3 seconds flat under reduced motion, which has no settle delay to add).
+- Confirmed exactly 2 balloon pieces render, with a computed `animation-delay` of 6s and 6.25s - after the 5.9s point where the last confetti piece finishes, not before.
+- Looked at a cropped, zoomed screenshot rather than a full-page one, since at the unzoomed scale I'd been using I initially couldn't tell whether the second balloon was rendering at all - it was, just smaller and further toward the screenshot's edge than was obvious at a glance.
+
+Related commit: `feat: delay music after card appears, balloons blow up post-confetti`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
