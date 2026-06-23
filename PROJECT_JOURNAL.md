@@ -268,11 +268,39 @@ How I tested it:
 
 Related commit: `feat: split builder into /create and /card routes`
 
-The main ideas are:
+### June 23, 2026: Shareable Card Links, No Backend
+
+The original idea for shareable links, written down a few entries ago, was "links for cards without uploaded photos" because I assumed the photo would have to live on a server somewhere. My actual priority right now is a working demo by tomorrow, not the most scalable version of this, so I asked: optimize for speed of implementation over scalability. That changed the whole approach. Instead of standing up a backend, the entire card, including a compressed copy of the uploaded photo, gets encoded directly into the `/card` link itself. No server, no database, no account to create. It's not how I'd build this for real long-term, but it gets the actual feature working today, photo and all, which is what tomorrow needs.
+
+Testing this in an actual browser, not just reading the code, caught two real problems. First, the generated link was long enough (the photo pushes it to roughly 15-20 KB of text) that the dev server rejected it outright with a 431 "Request Header Fields Too Large" error — a server-side limit I hadn't considered. The fix was putting the encoded data after a `#` instead of a `?`: browsers never send the part of a URL after `#` to the server at all, so the size limit stops applying. Second, I noticed the UI was saying "Could not create the link" even when the link had clearly been generated and was sitting right there on screen — turned out a failed clipboard-copy attempt was being reported as a failed link creation. Both were the kind of bug you only catch by actually running the thing.
+
+What changed:
+
+- Added a "Create card link" button next to Download and Share in the Download step.
+- The uploaded photo gets resized and compressed client-side before it's encoded, to keep the link a reasonable size.
+- The full card (recipient name, birthday, message, template, layout, photo scale, and the compressed photo) is base64-encoded into the link's URL fragment (`#d=...`), not its query string.
+- `/card` decodes that and renders the real card. With no link data, it now shows a card clearly labeled as a demo instead of quietly pretending to be a real one.
+- Fixed the clipboard-copy bug so a copy failure no longer reports as a link-creation failure.
+
+What I learned:
+
+- Running the feature end-to-end in a browser found two bugs that reading the code never would have.
+- "Optimize for speed, not scalability" is a real, legitimate way to scope a feature, not a shortcut to be embarrassed about. It's the reason the photo made it into the link at all today instead of waiting on backend work.
+- Anything that doesn't need to be seen by the server belongs after the `#`, not in the `?`.
+
+How I tested it:
+
+- Built a full card with a real uploaded photo, generated its link, and opened that link fresh to confirm the actual name, message, and photo appeared, not the sample card.
+- Confirmed visiting `/card` with no link data still shows a card clearly labeled as a demo.
+- Confirmed the clipboard fallback message is now accurate when copying isn't available.
+
+Related commit: `feat: shareable card links with the real photo, no backend`
+
+The remaining ideas from the original roadmap:
 
 - Add a recipient-facing envelope opening animation.
-- Add confetti or floating balloon animations.
-- Create shareable card links for cards without uploaded photos.
+- Add sound effects and confetti or floating balloon animations.
+- Revisit real backend storage for shareable links if this card ever needs to scale past a demo (shorter links, no size limit on the photo).
 
 These features would make the app feel more complete while still building on the foundation that already works.
 
