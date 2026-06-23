@@ -603,6 +603,35 @@ How I tested it:
 
 Related commit: `feat: make stickers and tags opt-in instead of always-on`
 
+### June 23, 2026: Real Sticker Art, No More Tag
+
+Quick follow-up to the opt-in stickers feature: drop the Happy Birthday tag entirely, show each sticker's actual artwork in the picker instead of a generic color swatch, drop the text labels since the art should speak for itself, and add explicit instructions for the click-to-toggle interaction.
+
+Removing the tag meant going further than just deleting it from the picker list - it had its own entry in the position data for every template, its own CSS color variable, and roughly a dozen per-template style overrides (rotation, position tweaks, a skewed shadow for the Pop Art template) scattered across the stylesheet. I went through and removed all of them rather than leaving dead rules behind.
+
+For the picker showing real artwork, I didn't want to duplicate each sticker's SVG markup in two places (the live card and the picker preview) - that's exactly the kind of thing that quietly drifts out of sync the first time either one gets edited. I pulled the actual path/shape content out of `CardPreview` into a shared module, `stickerGraphics.tsx`, that both the live draggable sticker and the static picker preview import from. The picker now renders the exact same artwork, just smaller and non-interactive.
+
+What changed:
+
+- The Happy Birthday ribbon/tag is gone completely - from the data model, the card, and every per-template CSS override that referenced it.
+- New `src/lib/stickerGraphics.tsx` holds each sticker's SVG content once; `CardPreview` and the Customize picker both read from it.
+- Picker buttons show the real sticker art, no text label, with an `aria-label` ("Add cake to the card" / "Remove cake from the card") carrying the accessible name that used to be visible text.
+- Added explicit guidance under Customize: "Click a sticker to add it to the card, or click it again to remove it."
+- The active/pressed state on a picker button is now a light tint and border instead of a solid dark fill, so the sticker's own colors don't get covered up.
+
+What I learned:
+
+- "Remove X completely" is a good prompt to actually grep for every reference rather than just deleting the one place I added it - it turned up far more scattered CSS than I expected, including styling I'd forgotten was specific to the tag (a skewed drop-shadow only on the Pop Art template).
+- My own test scripts from the previous step broke the moment I removed the visible text labels, since they were selecting buttons by their text. That's a real signal, not just test maintenance: anything else in the app that assumed those buttons had visible text (which nothing did, fortunately) would have broken too. I rewrote the checks to select by accessible name instead, which is also a better practice going forward since it matches what a screen reader user would actually have available.
+
+How I tested it:
+
+- Confirmed zero "ribbon" references remain anywhere in the source, and exactly 4 picker buttons render with no visible text.
+- Re-ran the drag-then-toggle-persistence check and the link/overlay round-trip check from the previous step, rewritten to target buttons by `aria-label` instead of visible text.
+- Confirmed the no-link demo card now shows 4 stickers instead of 5, matching the smaller catalog.
+
+Related commit: `feat: remove the Happy Birthday tag, show real sticker art in the picker`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
