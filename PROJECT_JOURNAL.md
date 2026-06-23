@@ -345,11 +345,40 @@ How I tested it:
 
 Related commit: `feat: play a chime when the envelope opens`
 
+### June 23, 2026: Mobile Pass and Link Previews
+
+Before assuming the new envelope and link features worked fine on a phone, I actually checked instead of guessing. Tested the builder's Download step and the recipient's envelope/card on an iPhone-sized viewport and again at a much narrower 320px width. Both held up with no horizontal overflow and no cramped buttons — the existing responsive CSS from the original wizard work already covered the new elements, since they reuse the same button and input classes rather than introducing new ones.
+
+I also wanted to check what happens to the open-chime sound on a browser without Web Audio support, since I can't test real iOS Safari from here. The closest available stand-in is Playwright's WebKit engine, and in this sandbox's headless build it turns out `AudioContext` isn't available at all. That ended up being a useful accident: it confirmed the chime's `try`/`catch` does exactly what it's supposed to — the envelope still opens perfectly, with no console errors, just silently with no sound. That's the right fallback behavior regardless of which browser causes it.
+
+The last piece was link previews — the roadmap's idea was that sharing a card link should show the actual photo in the messaging app preview. That's not possible with the no-backend design: a server-side preview crawler can't see anything in the URL fragment, since fragments never leave the browser. So I added Open Graph and Twitter Card tags to `index.html`, but they're necessarily generic — a static preview image for the app itself, not the actual card someone built. Worth being honest about: this is a direct, known limitation of choosing speed over a real backend, not something I solved.
+
+What changed:
+
+- Verified `/create`'s Download step and `/card`'s envelope/card at iPhone and 320px-wide viewports — no layout fixes were needed.
+- Confirmed the open-chime fails silently with no errors when Web Audio isn't available, using WebKit's lack of `AudioContext` in this environment as the test case.
+- Added generic Open Graph/Twitter Card meta tags and a static preview image (`public/og-preview.jpg`) so sharing the app's own link looks intentional in chat previews.
+
+What I learned:
+
+- "It probably works on mobile" isn't the same as checking. The existing CSS held up because the new UI reused existing classes, not because mobile was an afterthought I got lucky on.
+- A missing API in one browser is still a useful test of a fallback path, even if it's not a perfect stand-in for the real device I actually care about (iOS Safari).
+- Some limitations are downstream of an earlier decision, not new problems. The no-photo-in-link-preview gap is the same backend-vs-speed tradeoff from the shareable-links step, just showing up again here.
+
+How I tested it:
+
+- Walked the full builder flow and generated a card link at both a 390px and a 320px viewport width, checking for horizontal overflow at each step.
+- Tapped the envelope open via touch emulation at both widths and confirmed the reveal still works.
+- Ran the same envelope-open flow under WebKit and confirmed no errors when Web Audio is unavailable.
+- Built the production bundle and confirmed the Open Graph image is actually copied into `dist/` alongside `index.html`.
+
+Related commit: `feat: mobile usability pass and generic Open Graph tags`
+
 The remaining ideas from the original roadmap:
 
-- Mobile usability pass on `/card`: tap target sizing for the envelope, animation performance on lower-end phones, and Open Graph tags so a shared link previews nicely in messaging apps.
 - Add confetti or floating balloon animations.
-- Revisit real backend storage for shareable links if this card ever needs to scale past a demo (shorter links, no size limit on the photo).
+- Revisit real backend storage for shareable links if this card ever needs to scale past a demo (shorter links, no size limit on the photo, real link previews with the actual photo).
+- Basic guardrails on photo size before it gets compressed into a link, since there's currently no upper bound on what someone could try to upload.
 
 These features would make the app feel more complete while still building on the foundation that already works.
 
