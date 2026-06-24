@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { checkRateLimit, loadCard, saveCard } from "./_lib/cardStore";
 
 // Mirrors src/lib/cardLink.ts's decodeCardLink validation. Duplicated
@@ -33,58 +34,77 @@ function isValidPayloadShape(data: unknown): boolean {
   );
 }
 
-function getClientIp(request: Request): string {
-  return (
-    request.headers.get("x-vercel-forwarded-for") ??
-    request.headers.get("x-real-ip") ??
-    "unknown"
-  );
+function getClientIp(req: VercelRequest): string {
+  const header = req.headers["x-vercel-forwarded-for"] ?? req.headers["x-real-ip"];
+  const value = Array.isArray(header) ? header[0] : header;
+
+  return value ?? "unknown";
 }
 
-export async function POST(request: Request): Promise<Response> {
+async function handlePost(req: VercelRequest, res: VercelResponse) {
   try {
-    const withinLimit = await checkRateLimit(getClientIp(request));
+    const withinLimit = await checkRateLimit(getClientIp(req));
 
     if (!withinLimit) {
-      return Response.json({ error: "Too many requests." }, { status: 429 });
+      res.status(429).json({ error: "Too many requests." });
+      return;
     }
 
-    const rawBody = await request.text();
+    // Vercel's Node runtime already parses a JSON request body into
+    // req.body - re-stringify just to measure its real serialized size.
+    const payload = req.body;
+    const serialized = JSON.stringify(payload) ?? "";
 
-    if (rawBody.length > MAX_PAYLOAD_LENGTH) {
-      return Response.json({ error: "Card is too large." }, { status: 413 });
+    if (serialized.length > MAX_PAYLOAD_LENGTH) {
+      res.status(413).json({ error: "Card is too large." });
+      return;
     }
-
-    const payload = JSON.parse(rawBody);
 
     if (!isValidPayloadShape(payload)) {
-      return Response.json({ error: "Invalid card data." }, { status: 400 });
+      res.status(400).json({ error: "Invalid card data." });
+      return;
     }
 
     const id = await saveCard(payload);
 
-    return Response.json({ id }, { status: 201 });
+    res.status(201).json({ id });
   } catch {
-    return Response.json({ error: "Could not create the link." }, { status: 500 });
+    res.status(500).json({ error: "Could not create the link." });
   }
 }
 
-export async function GET(request: Request): Promise<Response> {
+async function handleGet(req: VercelRequest, res: VercelResponse) {
   try {
-    const id = new URL(request.url).searchParams.get("id");
+    const id = typeof req.query.id === "string" ? req.query.id : null;
 
     if (!id) {
-      return Response.json({ error: "Missing id." }, { status: 400 });
+      res.status(400).json({ error: "Missing id." });
+      return;
     }
 
     const payload = await loadCard(id);
 
     if (!payload) {
-      return Response.json({ error: "Card not found." }, { status: 404 });
+      res.status(404).json({ error: "Card not found." });
+      return;
     }
 
-    return Response.json(payload, { status: 200 });
+    res.status(200).json(payload);
   } catch {
-    return Response.json({ error: "Could not load the card." }, { status: 500 });
+    res.status(500).json({ error: "Could not load the card." });
   }
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method === "POST") {
+    await handlePost(req, res);
+    return;
+  }
+
+  if (req.method === "GET") {
+    await handleGet(req, res);
+    return;
+  }
+
+  res.status(405).json({ error: "Method not allowed." });
 }
