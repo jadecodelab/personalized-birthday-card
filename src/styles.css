@@ -78,7 +78,9 @@ h1 {
 }
 
 .wizard-shell {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   gap: 18px;
 }
 
@@ -199,8 +201,23 @@ h1 {
   line-height: 1.35;
 }
 
+.share-link-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.share-link-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
 .control-stack {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
   gap: 18px;
 }
 
@@ -349,6 +366,14 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.photo-upload-error {
+  margin: -4px 0 0;
+  color: #b91f55;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .choice-row,
 .template-grid {
   display: grid;
@@ -433,13 +458,58 @@ textarea {
   background: linear-gradient(135deg, #eefcf8 0 45%, #4d9de0 46% 72%, #ec4e7a 73%);
 }
 
+.sticker-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 10px;
+}
+
+.sticker-picker-button {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+  padding: 8px;
+  background: #fff5fa;
+  border: 1px solid #ffd0df;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sticker-picker-button:hover {
+  border-color: #d82768;
+  background: #ffeaf3;
+}
+
+.sticker-picker-button:focus-visible {
+  border-color: #d82768;
+  box-shadow: 0 0 0 3px rgb(216 39 104 / 0.16);
+  outline: none;
+}
+
+/* A light tint + border instead of a solid fill, like the template/choice
+   buttons use, so the sticker's own artwork and colors stay legible. */
+.sticker-picker-button[aria-pressed="true"] {
+  background: #ffd9e8;
+  border-color: #b91f55;
+  box-shadow: 0 0 0 2px rgb(184 31 85 / 0.18);
+}
+
+.sticker-picker-icon {
+  width: 42px;
+  height: 42px;
+}
+
 .preview-panel {
   align-self: start;
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 28px;
-  background: #30264d;
+  background:
+    radial-gradient(circle at 16% 10%, rgb(255 143 179 / 0.24) 0 18%, transparent 19%),
+    radial-gradient(circle at 88% 80%, rgb(77 157 224 / 0.2) 0 22%, transparent 23%),
+    radial-gradient(circle at 92% 16%, rgb(255 207 63 / 0.16) 0 12%, transparent 13%),
+    linear-gradient(165deg, #3c2f60 0%, #30264d 55%, #261e3d 100%);
   border-radius: 8px;
   color: #ffffff;
   overflow: hidden;
@@ -526,11 +596,420 @@ textarea {
   line-height: 1.35;
 }
 
+.recipient-preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(255 143 179 / 0.16) 0 40%, transparent 60%),
+    #241c3b;
+}
+
+.recipient-preview-close {
+  align-self: flex-end;
+  min-height: 34px;
+  padding: 7px 12px;
+  color: #ffffff;
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.26);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.recipient-preview-close:hover,
+.recipient-preview-close:focus-visible {
+  background: rgb(255 255 255 / 0.2);
+  border-color: rgb(255 255 255 / 0.48);
+  outline: none;
+}
+
+.envelope-reveal {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 9 / 16;
+  margin: 0 auto;
+}
+
+.envelope-reveal-card {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(32%) scale(0.92);
+  transition:
+    opacity 0.9s ease 0.65s,
+    transform 1s cubic-bezier(0.34, 1.4, 0.64, 1) 0.65s;
+}
+
+.envelope-reveal-card .card-preview {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+.envelope-reveal--open .envelope-reveal-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.envelope {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  perspective: 1200px;
+}
+
+.envelope:disabled {
+  pointer-events: none;
+}
+
+.envelope-back,
+.envelope-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.5s,
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.5s;
+}
+
+.envelope-back {
+  background: linear-gradient(160deg, #ffe0ea, #ffb3c9);
+  box-shadow: 0 22px 60px rgb(154 72 113 / 0.32);
+}
+
+.envelope-front {
+  top: 38%;
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  gap: 6px;
+  padding: 0 20px 28px;
+  background: linear-gradient(180deg, #fff0f6, #ffe0ea);
+  border-top: 1px solid rgb(185 31 85 / 0.16);
+}
+
+.envelope-to {
+  color: #7a3155;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.envelope-prompt {
+  color: #b91f55;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.envelope-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(200deg, #ff8fb3, #d82768);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  box-shadow: 0 2px 6px rgb(154 72 113 / 0.18);
+}
+
+.envelope-seal {
+  width: 30px;
+  height: 30px;
+  background: #b91f55;
+  border: 2px solid rgb(255 255 255 / 0.7);
+  border-radius: 50%;
+  box-shadow: 0 6px 14px rgb(29 36 46 / 0.25);
+}
+
+/* A brief held-breath cue before the envelope actually opens. */
+.envelope-reveal--anticipating .envelope-seal {
+  animation: envelope-seal-pulse 0.45s ease-in-out;
+}
+
+@keyframes envelope-seal-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 6px 14px rgb(29 36 46 / 0.25);
+  }
+  50% {
+    transform: scale(1.14);
+    box-shadow: 0 8px 20px rgb(184 31 85 / 0.45);
+  }
+}
+
+.envelope-reveal--open .envelope-flap {
+  animation: envelope-flap-open 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes envelope-flap-open {
+  0% {
+    transform: rotateX(0deg);
+    opacity: 1;
+    box-shadow: 0 2px 6px rgb(154 72 113 / 0.18);
+  }
+  55% {
+    transform: rotateX(-112deg);
+    opacity: 1;
+    box-shadow: 0 20px 34px rgb(154 72 113 / 0.36);
+  }
+  100% {
+    transform: rotateX(-150deg);
+    opacity: 0;
+    box-shadow: 0 20px 34px rgb(154 72 113 / 0);
+  }
+}
+
+.envelope-reveal--open .envelope-back,
+.envelope-reveal--open .envelope-front {
+  opacity: 0;
+  transform: translateY(48px) scale(0.94);
+}
+
+/* Both burst layers are enlarged well past the card's own box - clipped at
+   the preview panel's edges (it has overflow: hidden), not the card's - so
+   confetti and balloons visibly cover the whole preview section instead of
+   staying confined to the card's narrow column. */
+.confetti-burst,
+.balloon-burst {
+  position: absolute;
+  top: -26%;
+  left: -24%;
+  right: -24%;
+  bottom: -10%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-burst {
+  z-index: 6;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 14%;
+  left: var(--piece-left);
+  width: var(--piece-width);
+  height: var(--piece-height);
+  background: var(--piece-color);
+  border-radius: 2px;
+  opacity: 0;
+}
+
+/* Confetti only starts once the card has mostly settled into view - not at
+   the moment the envelope opens - and falls slowly across the whole panel. */
+.envelope-reveal--open .confetti-piece {
+  animation: confetti-fall var(--piece-duration) cubic-bezier(0.45, 0, 0.4, 1)
+    forwards;
+  animation-delay: calc(1.45s + var(--piece-stagger));
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  8% {
+    opacity: 1;
+    transform: translate(var(--piece-burst-x), 0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--piece-drift-x), var(--piece-fall-y))
+      rotate(var(--piece-rotate));
+  }
+}
+
+.balloon-burst {
+  z-index: 7;
+}
+
+.balloon-piece {
+  position: absolute;
+  bottom: -6%;
+  left: var(--balloon-left);
+  width: 58px;
+  height: 72px;
+  background:
+    radial-gradient(circle at 32% 26%, rgb(255 255 255 / 0.65), transparent 45%),
+    var(--balloon-color);
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  box-shadow:
+    inset -8px -8px 14px rgb(0 0 0 / 0.14),
+    0 12px 24px rgb(34 16 36 / 0.24);
+  opacity: 0;
+}
+
+.balloon-piece::before {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 12px solid var(--balloon-color);
+  filter: brightness(0.82);
+  transform: translateX(-50%);
+}
+
+.balloon-piece::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 2px;
+  height: 46px;
+  background: rgb(255 255 255 / 0.45);
+  transform: translateX(-50%) translateY(4px);
+}
+
+/* Balloons "blow up" only once every confetti piece has finished falling
+   (the latest confetti piece's stagger + duration ends at 1.45s + 4.45s =
+   5.9s), not while confetti is still in the air - a single closing beat
+   instead of two effects overlapping. */
+.envelope-reveal--open .balloon-piece {
+  animation: balloon-float var(--balloon-duration) ease forwards;
+  animation-delay: calc(6s + var(--balloon-stagger));
+}
+
+@keyframes balloon-float {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  10% {
+    opacity: 0.95;
+    transform: translate(0, -120px) rotate(0deg);
+  }
+  35% {
+    transform: translate(var(--balloon-drift), -280px) rotate(var(--balloon-tilt));
+  }
+  65% {
+    transform: translate(calc(var(--balloon-drift) * -1), -460px)
+      rotate(calc(var(--balloon-tilt) * -1));
+  }
+  88% {
+    opacity: 0.75;
+    transform: translate(var(--balloon-drift), -600px) rotate(var(--balloon-tilt));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--balloon-drift), -650px) rotate(0deg);
+  }
+}
+
+.finale-text {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10% 9%;
+  pointer-events: none;
+  text-align: center;
+}
+
+.finale-text span {
+  opacity: 0;
+  display: inline-block;
+  transform: scale(0.4) rotate(-4deg);
+  font-size: clamp(1.5rem, 8vw, 2.5rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: #ffffff;
+  -webkit-text-stroke: 1.5px #b91f55;
+  text-shadow:
+    0 3px 0 #b91f55,
+    0 8px 22px rgb(184 31 85 / 0.55);
+}
+
+/* Arrives once the balloons are already underway - the celebration's
+   closing flourish, not something the recipient has to wait through the
+   whole sequence to see, then fades to leave the card visible again. */
+.envelope-reveal--open .finale-text span {
+  animation: finale-text-pop 3.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 7s;
+}
+
+@keyframes finale-text-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-4deg);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.08) rotate(1deg);
+  }
+  28% {
+    transform: scale(1) rotate(0deg);
+  }
+  45% {
+    transform: scale(1.04) rotate(0deg);
+  }
+  60% {
+    transform: scale(1) rotate(0deg);
+  }
+  82% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.92) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .envelope-reveal--open .envelope-flap {
+    animation: none;
+    transform: rotateX(-150deg);
+    opacity: 0;
+  }
+
+  .envelope-seal {
+    animation: none;
+  }
+
+  .envelope-back,
+  .envelope-front,
+  .envelope-reveal-card {
+    transition: none;
+  }
+
+  .confetti-burst,
+  .balloon-burst,
+  .finale-text {
+    display: none;
+  }
+}
+
 .card-preview {
   --card-surface: #fff0f6;
   --card-ink: #33223d;
   --card-muted: #644d6b;
-  --ribbon-surface: #d82768;
   --tag-surface: #277b73;
   --photo-a: #ffafcc;
   --photo-b: #8fd7ff;
@@ -576,7 +1055,6 @@ textarea {
   --card-surface: #ffe66d;
   --card-ink: #24304c;
   --card-muted: #43506a;
-  --ribbon-surface: #c92966;
   --tag-surface: #237d74;
   --photo-a: #31c6b4;
   --photo-b: #4d9de0;
@@ -589,7 +1067,6 @@ textarea {
   --card-surface: #26305c;
   --card-ink: #fff9f2;
   --card-muted: #e2e7ff;
-  --ribbon-surface: #ff6b4a;
   --tag-surface: #ffcf3f;
   --photo-a: #ff8fb3;
   --photo-b: #35c2c9;
@@ -603,7 +1080,6 @@ textarea {
   --card-surface: #eefcf8;
   --card-ink: #132029;
   --card-muted: #365364;
-  --ribbon-surface: #2f6fa5;
   --tag-surface: #c92966;
   --photo-a: #9ee6dc;
   --photo-b: #4d9de0;
@@ -620,10 +1096,6 @@ textarea {
     radial-gradient(circle at 16% 78%, rgb(141 215 255 / 0.35) 0 9%, transparent 9.5%),
     linear-gradient(160deg, rgb(255 255 255 / 0.55), transparent 42%),
     var(--card-surface);
-}
-
-.card-preview--elegant .card-ribbon {
-  transform: rotate(-2deg);
 }
 
 .card-preview--elegant .photo-placeholder {
@@ -682,12 +1154,6 @@ textarea {
     radial-gradient(circle at 80% 24%, rgb(255 107 148 / 0.34) 0 4%, transparent 4.4%),
     radial-gradient(circle at 72% 72%, rgb(49 198 180 / 0.38) 0 5%, transparent 5.3%),
     var(--card-surface);
-}
-
-.card-preview--playful .card-ribbon {
-  left: auto;
-  right: 28px;
-  transform: rotate(5deg);
 }
 
 .card-preview--playful .card-graphic--cake {
@@ -753,15 +1219,6 @@ textarea {
     var(--card-surface);
 }
 
-.card-preview--bold .card-ribbon {
-  position: relative;
-  top: auto;
-  left: auto;
-  width: fit-content;
-  transform: skewX(-8deg);
-  box-shadow: 8px 8px 0 rgb(255 207 63 / 0.9);
-}
-
 .card-preview--bold .photo-placeholder {
   width: var(--photo-size);
   align-self: center;
@@ -824,11 +1281,6 @@ textarea {
   background:
     linear-gradient(180deg, transparent 0 56%, rgb(255 255 255 / 0.72) 56%),
     var(--card-surface);
-}
-
-.card-preview--photo .card-ribbon {
-  top: 42px;
-  left: 42px;
 }
 
 .card-preview--photo .photo-placeholder {
@@ -979,21 +1431,6 @@ textarea {
   transform: rotate(-18deg);
 }
 
-.card-ribbon {
-  position: absolute;
-  z-index: 4;
-  top: 28px;
-  left: 28px;
-  padding: 10px 14px;
-  color: #ffffff;
-  background: var(--ribbon-surface);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .photo-placeholder {
   position: relative;
   z-index: 1;
@@ -1114,10 +1551,6 @@ textarea {
   --item-rotation: 9deg;
 }
 
-.card-preview--elegant .card-ribbon {
-  --item-rotation: -2deg;
-}
-
 .card-preview--playful .photo-placeholder {
   --item-rotation: 8deg;
 }
@@ -1138,10 +1571,6 @@ textarea {
   --item-rotation: 12deg;
 }
 
-.card-preview--playful .card-ribbon {
-  --item-rotation: 5deg;
-}
-
 .card-preview--bold .photo-placeholder {
   --item-rotation: -5deg;
 }
@@ -1158,11 +1587,6 @@ textarea {
   --item-rotation: -5deg;
 }
 
-.card-preview--bold .card-ribbon {
-  --item-rotation: 0deg;
-  --item-skew: -8deg;
-}
-
 .card-preview--photo .photo-placeholder {
   --item-rotation: 0deg;
 }
@@ -1177,10 +1601,6 @@ textarea {
 
 .card-preview--photo .card-graphic--balloons {
   --item-rotation: 7deg;
-}
-
-.card-preview--photo .card-ribbon {
-  --item-rotation: 0deg;
 }
 
 .card-preview .movable-card-item {
@@ -1201,10 +1621,6 @@ textarea {
   transform: translate(-50%, -50%) rotate(var(--item-rotation, 0deg))
     skewX(var(--item-skew, 0deg)) scale(var(--item-scale, 1));
   user-select: none;
-}
-
-.card-preview .card-ribbon.movable-card-item {
-  z-index: 4;
 }
 
 .card-preview .photo-placeholder.movable-card-item {
@@ -1281,7 +1697,9 @@ textarea {
   }
 
   .preview-panel {
-    position: static;
+    /* Stays a positioned (non-static) box so .recipient-preview-overlay's
+       inset:0 keeps using this panel as its containing block, not the page. */
+    position: relative;
   }
 
   .card-preview {
@@ -1407,11 +1825,6 @@ textarea {
     gap: clamp(10px, 3vw, 14px);
   }
 
-  .card-ribbon {
-    top: 20px;
-    left: 20px;
-  }
-
   .photo-placeholder {
     width: min(70%, 260px);
   }
@@ -1460,11 +1873,6 @@ textarea {
   .card-preview--photo {
     grid-template-rows: var(--media-height) minmax(0, 1fr);
     padding: 18px 18px 32px;
-  }
-
-  .card-preview--photo .card-ribbon {
-    top: 28px;
-    left: 28px;
   }
 
   .card-preview--photo .photo-placeholder {

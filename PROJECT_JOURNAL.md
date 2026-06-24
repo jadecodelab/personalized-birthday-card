@@ -239,13 +239,420 @@ What I learned:
 
 Related commit: `feat: add preview guide and photo sizing`
 
-The main ideas are:
+### June 23, 2026: Splitting Builder and Recipient Routes
 
-- Add a recipient-facing envelope opening animation.
-- Add confetti or floating balloon animations.
-- Create shareable card links for cards without uploaded photos.
+On June 23, 2026, I created a new branch, `envelope-feature`, off main to work on this phase without touching the working app on `main`. This is also the point where I switched assistants, from Codex to Claude Code, for this project. I want to be upfront about that the same way I was about using Codex: the working process hasn't changed. I still decide what gets built, review every change before it's committed, and test in the browser myself.
 
-These features would make the app feel more complete while still building on the foundation that already works.
+Before any envelope animation, sound, or shareable link could be built, the app needed two separate experiences instead of one. Up to this point, `App.tsx` was a single file that handled the entire wizard, every drag/resize/pinch interaction, the PNG export pipeline, and the live preview all at once. A recipient opening a finished card was always going to need a much lighter experience than someone building one, so the first step of this phase was carving out that boundary before adding anything new on top of it.
+
+I added a router and split the app into a `/create` builder route and a `/card` recipient route. The card's visual markup (the graphics, ribbon, photo frame, and message) moved into its own `CardPreview` component so both routes render the same card instead of keeping two copies in sync. `CardPreview` takes an `interactive` flag: the builder gets full drag-and-drop and resize exactly as before, while the recipient route renders the same visual statically, with no drag handles. For this commit, `/card` shows a sample card rather than a real one, since shareable links (passing an actual finished card to that route) is its own piece of work still to come.
+
+What changed:
+
+- Added `react-router-dom` and a router shell in `App.tsx` with `/`, `/create`, and `/card` routes (`/` redirects to `/create`).
+- Moved the wizard, all interaction state, and the export pipeline into `src/pages/CreatePage.tsx`, unchanged in behavior.
+- Extracted the card's visual markup into `src/components/CardPreview.tsx`, reused by both routes.
+- Added `src/pages/CardPage.tsx`, a static recipient view rendering a sample card.
+- Moved shared constants and types (templates, message presets, default layouts) into `src/lib/cardData.ts` so both routes can use them without duplication.
+
+What I learned:
+
+- Splitting a monolith is its own task, separate from the feature it's in service of. Doing the route split as its own commit, with zero behavior change to the builder, made it easy to verify nothing broke before any new feature touched the code.
+- A shared presentational component (`CardPreview`) is a cleaner seam for "the recipient sees a different version of this" than branching logic inside one big component.
+
+How I tested it:
+
+- Ran `npm run build` to confirm the new file layout still type-checks.
+- Ran the dev server and walked through the builder wizard end to end, dragging stickers and resizing the photo, to confirm no regression from the original single-file version.
+- Visited `/card` directly and confirmed it renders a static sample card with no resize handles or drag behavior.
+
+Related commit: `feat: split builder into /create and /card routes`
+
+### June 23, 2026: Shareable Card Links, No Backend
+
+The original idea for shareable links, written down a few entries ago, was "links for cards without uploaded photos" because I assumed the photo would have to live on a server somewhere. My actual priority right now is a working demo by tomorrow, not the most scalable version of this, so I asked: optimize for speed of implementation over scalability. That changed the whole approach. Instead of standing up a backend, the entire card, including a compressed copy of the uploaded photo, gets encoded directly into the `/card` link itself. No server, no database, no account to create. It's not how I'd build this for real long-term, but it gets the actual feature working today, photo and all, which is what tomorrow needs.
+
+Testing this in an actual browser, not just reading the code, caught two real problems. First, the generated link was long enough (the photo pushes it to roughly 15-20 KB of text) that the dev server rejected it outright with a 431 "Request Header Fields Too Large" error — a server-side limit I hadn't considered. The fix was putting the encoded data after a `#` instead of a `?`: browsers never send the part of a URL after `#` to the server at all, so the size limit stops applying. Second, I noticed the UI was saying "Could not create the link" even when the link had clearly been generated and was sitting right there on screen — turned out a failed clipboard-copy attempt was being reported as a failed link creation. Both were the kind of bug you only catch by actually running the thing.
+
+What changed:
+
+- Added a "Create card link" button next to Download and Share in the Download step.
+- The uploaded photo gets resized and compressed client-side before it's encoded, to keep the link a reasonable size.
+- The full card (recipient name, birthday, message, template, layout, photo scale, and the compressed photo) is base64-encoded into the link's URL fragment (`#d=...`), not its query string.
+- `/card` decodes that and renders the real card. With no link data, it now shows a card clearly labeled as a demo instead of quietly pretending to be a real one.
+- Fixed the clipboard-copy bug so a copy failure no longer reports as a link-creation failure.
+
+What I learned:
+
+- Running the feature end-to-end in a browser found two bugs that reading the code never would have.
+- "Optimize for speed, not scalability" is a real, legitimate way to scope a feature, not a shortcut to be embarrassed about. It's the reason the photo made it into the link at all today instead of waiting on backend work.
+- Anything that doesn't need to be seen by the server belongs after the `#`, not in the `?`.
+
+How I tested it:
+
+- Built a full card with a real uploaded photo, generated its link, and opened that link fresh to confirm the actual name, message, and photo appeared, not the sample card.
+- Confirmed visiting `/card` with no link data still shows a card clearly labeled as a demo.
+- Confirmed the clipboard fallback message is now accurate when copying isn't available.
+
+Related commit: `feat: shareable card links with the real photo, no backend`
+
+### June 23, 2026: Envelope-Opening Animation
+
+With `/card` able to show a real card and the real photo, the next piece was making the recipient's first moment feel like opening an actual gift instead of just loading a webpage. I built a self-contained `EnvelopeReveal` component that wraps the card on `/card`: a closed envelope addressed "To: [name]" sits in front of the real card until tapped, then the flap flips open and the whole envelope fades away to reveal the card underneath. I kept this CSS-only, no animation library, for the same reason the link feature stayed backend-free — it's fast to build and has nothing extra to install.
+
+Looking at it on screen, not just reading the CSS, caught a real bug: the first version rotated the flap open but never faded it, so after the rotation finished a thin sliver of the flap was still visible, overlapping the top of the revealed card. The fix was fading the flap's opacity alongside its rotation, not relying on the rotation alone to make it disappear.
+
+What changed:
+
+- Added `EnvelopeReveal` (`src/components/EnvelopeReveal.tsx`), used only on `/card` — the builder's live preview is untouched, no envelope there.
+- Closed state: envelope addressed to the recipient with a "Tap to open" prompt.
+- Open state: flap flips via a CSS `rotateX` transform, then the whole envelope fades while the real card scales and fades in underneath.
+- Respects `prefers-reduced-motion` — the open state applies instantly with no transition for anyone who has that setting on.
+
+What I learned:
+
+- A transform without a matching opacity fade can leave a visible artifact once something rotates past edge-on to the camera. Looked fine in my head; wasn't fine on screen until I actually looked.
+- Self-contained UI state (the envelope owns its own open/closed flag) is a clean fit for an interaction that's purely visual and doesn't need to affect anything else in the app.
+
+How I tested it:
+
+- Built a real card with a photo, generated its link, opened it like a recipient would, and confirmed the envelope appears closed first, opens on tap, and reveals the actual card and photo underneath.
+- Took screenshots before, mid-open, and after specifically to catch the flap artifact, since that bug was invisible just from reading the CSS.
+
+Related commit: `feat: envelope-opening animation on the recipient view`
+
+### June 23, 2026: Sound Effect on Envelope Open
+
+Sound was next. Downloading and licensing an audio file felt like more setup than the feature was worth at demo speed, so the chime is synthesized in the browser instead, using the Web Audio API: two short sine-wave notes shaped with a volume envelope. No asset file, nothing to license, nothing to load.
+
+The one real constraint here is that browsers block audio until a genuine user gesture creates or resumes the `AudioContext`. Calling the chime function synchronously inside the same click handler that opens the envelope satisfies that automatically — no special-casing needed.
+
+What changed:
+
+- Added `src/lib/sound.ts` with a `playOpenChime()` function that synthesizes a two-note chime via Web Audio oscillators and gain envelopes.
+- `EnvelopeReveal` calls it the moment the envelope is tapped, right as the open animation starts.
+- Wrapped in a `try`/`catch` so a browser without Web Audio support just opens the envelope silently instead of breaking anything.
+
+What I learned:
+
+- Not every "add a sound effect" ask needs an audio file. For a short UI chime, synthesizing it is faster and sidesteps any licensing question entirely.
+- I confirmed the `AudioContext` actually gets created at the moment of the click rather than just trusting the code looked right on read-through.
+
+How I tested it:
+
+- Verified an `AudioContext` is created exactly when the envelope is tapped, with no console errors, and that the card still reveals correctly with the sound wired in.
+- Listening for the sound itself isn't something I can verify from code or screenshots — that part's a manual check, on my own machine.
+
+Related commit: `feat: play a chime when the envelope opens`
+
+### June 23, 2026: Mobile Pass and Link Previews
+
+Before assuming the new envelope and link features worked fine on a phone, I actually checked instead of guessing. Tested the builder's Download step and the recipient's envelope/card on an iPhone-sized viewport and again at a much narrower 320px width. Both held up with no horizontal overflow and no cramped buttons — the existing responsive CSS from the original wizard work already covered the new elements, since they reuse the same button and input classes rather than introducing new ones.
+
+I also wanted to check what happens to the open-chime sound on a browser without Web Audio support, since I can't test real iOS Safari from here. The closest available stand-in is Playwright's WebKit engine, and in this sandbox's headless build it turns out `AudioContext` isn't available at all. That ended up being a useful accident: it confirmed the chime's `try`/`catch` does exactly what it's supposed to — the envelope still opens perfectly, with no console errors, just silently with no sound. That's the right fallback behavior regardless of which browser causes it.
+
+The last piece was link previews — the roadmap's idea was that sharing a card link should show the actual photo in the messaging app preview. That's not possible with the no-backend design: a server-side preview crawler can't see anything in the URL fragment, since fragments never leave the browser. So I added Open Graph and Twitter Card tags to `index.html`, but they're necessarily generic — a static preview image for the app itself, not the actual card someone built. Worth being honest about: this is a direct, known limitation of choosing speed over a real backend, not something I solved.
+
+What changed:
+
+- Verified `/create`'s Download step and `/card`'s envelope/card at iPhone and 320px-wide viewports — no layout fixes were needed.
+- Confirmed the open-chime fails silently with no errors when Web Audio isn't available, using WebKit's lack of `AudioContext` in this environment as the test case.
+- Added generic Open Graph/Twitter Card meta tags and a static preview image (`public/og-preview.jpg`) so sharing the app's own link looks intentional in chat previews.
+
+What I learned:
+
+- "It probably works on mobile" isn't the same as checking. The existing CSS held up because the new UI reused existing classes, not because mobile was an afterthought I got lucky on.
+- A missing API in one browser is still a useful test of a fallback path, even if it's not a perfect stand-in for the real device I actually care about (iOS Safari).
+- Some limitations are downstream of an earlier decision, not new problems. The no-photo-in-link-preview gap is the same backend-vs-speed tradeoff from the shareable-links step, just showing up again here.
+
+How I tested it:
+
+- Walked the full builder flow and generated a card link at both a 390px and a 320px viewport width, checking for horizontal overflow at each step.
+- Tapped the envelope open via touch emulation at both widths and confirmed the reveal still works.
+- Ran the same envelope-open flow under WebKit and confirmed no errors when Web Audio is unavailable.
+- Built the production bundle and confirmed the Open Graph image is actually copied into `dist/` alongside `index.html`.
+
+Related commit: `feat: mobile usability pass and generic Open Graph tags`
+
+### June 23, 2026: Hardening the No-Backend Approach
+
+The original roadmap's last phase was scalability and hardening, written back when I was still planning a real backend: storage expiry, rate limiting on a public write endpoint, that kind of thing. None of that applies anymore, since there's no backend and no write endpoint. Rather than skip the phase entirely, I re-scoped it to what's actually real for the approach I ended up shipping: making sure the link-encoding trick doesn't quietly break on inputs I didn't test by hand.
+
+Two gaps stood out. First, the photo upload only had the browser's `accept="image/*"` hint, which is a suggestion, not an enforcement — nothing stopped someone from picking a non-image file and the app silently treating it like a photo. Second, and more important, `compressPhotoForLink` had no upper bound at all. Every sample photo I'd tested with happened to compress to well under 15KB, but I had no actual evidence that would hold for every possible photo, and I didn't want to find out from a recipient with a broken link instead of from my own testing.
+
+What changed:
+
+- Photo upload now checks the file's actual MIME type and shows a clear message instead of accepting a non-image file.
+- `compressPhotoForLink` now retries at progressively smaller dimensions and quality (320px/0.6 → 240px/0.5 → 180px/0.4) and gives up rather than ever shipping a photo over 40KB in the link — comfortably above the worst case I actually measured, but a real backstop instead of an assumption.
+- If every attempt is still too large, the link is created without the photo, and the status message says so honestly instead of pretending it worked.
+
+What I learned:
+
+- "I tested it with a few photos and it was fine" is not the same as "it has a guaranteed upper bound." The first is a sample; the second is a guarantee. Only one of those is something I can stand behind for a recipient I haven't met.
+- A re-scoped phase is still worth doing under its original name, even when the original plan doesn't apply anymore. The intent behind "hardening" survived the architecture change, even though the specific roadmap items didn't.
+- I couldn't trigger the drop-the-photo path with any of my real sample images, so I temporarily forced the size cap down to confirm that exact code path actually runs and behaves correctly, then put the real number back. Code that only theoretically works isn't tested.
+
+How I tested it:
+
+- Uploaded a non-image file and confirmed it's rejected with a clear message, with no photo state silently set.
+- Generated a card link with each sample photo and confirmed the link still includes the real photo with the actual compression cap in place.
+- Temporarily set the cap absurdly low, regenerated a link, and confirmed the photo gets dropped, the card still renders correctly with the right name and message, and the status message explains what happened — then restored the real value and re-confirmed normal behavior.
+
+Related commit: `feat: harden photo upload and link compression`
+
+### June 23, 2026: Confetti on Open
+
+The last item on the original roadmap was confetti or floating balloon animations. With the envelope, the chime, and the reveal already working, this was the smallest possible addition that still made the moment feel a little more like a celebration: a short burst of confetti pieces falling and fading right as the envelope opens, on top of the flap animation and the chime that were already there.
+
+I kept this consistent with everything else in this phase: CSS-only, no animation library, decorative and `aria-hidden`, and skipped entirely for anyone with `prefers-reduced-motion` set, rather than just slowed down. Sixteen pieces with hardcoded (not randomized) positions, colors, and stagger delays — randomizing them would have looked the same to a viewer but added complexity for no real benefit here.
+
+What changed:
+
+- Added a `confetti-burst` layer inside `EnvelopeReveal`, rendered above the envelope and the card.
+- Sixteen small pieces fall and rotate with staggered delays over about 1.3 seconds, triggered by the same `envelope-reveal--open` class toggle that drives the flap and card-reveal transitions.
+- Confetti is skipped entirely under `prefers-reduced-motion`, matching how the rest of the envelope's motion is handled.
+
+What I learned:
+
+- The smallest version of an idea is often enough. "Confetti or floating balloons" didn't need both, and didn't need to be physics-accurate — a believable fall-and-fade with a bit of stagger reads as confetti without much code.
+- Checking a mid-animation screenshot can look like a bug (the card looked washed-out, with envelope text still faintly visible through it) when it's actually just an honest snapshot of two transitions crossing over each other. Looking at the *settled* end state, not just one frame, is what actually tells you if something's wrong.
+
+How I tested it:
+
+- Opened a real card link and captured the moment mid-fall (confetti visible, card and envelope still cross-fading) and well after the animation ends, confirming the final state is clean with no leftover artifacts.
+- Confirmed no console errors with the confetti layer added.
+
+Related commit: `feat: confetti burst on envelope open`
+
+This closes out every idea from the original roadmap: envelope animation, sound, shareable links (re-scoped for speed), mobile usability, hardening, and now confetti. What's left, if this ever needs to grow past a demo, is revisiting real backend storage for shareable links — shorter links, no size limit on the photo, and real per-card link previews with the actual photo, none of which are possible with the current no-backend approach.
+
+### June 23, 2026: Builder UI Pass
+
+With the recipient side (envelope, sound, confetti, the real card) feeling polished, I took a step back and asked for honest feedback on the builder side, since I'd been heads-down on features and hadn't really looked at it critically in a while. The feedback was specific, not generic: the builder panel had a lot of dead space on most steps, every button in the app was the same pink with no sense of which action mattered most, the Preview step had almost no content of its own, and — the one I liked most — the person *building* the card never got to experience the envelope/chime/confetti moment unless they pasted their own link into a new tab.
+
+I agreed with all of it, and added two more: drop the "Share card" button entirely (Download plus the link feature cover that need now), and make the dark preview panel background feel less flat.
+
+What changed:
+
+- Removed "Share card"/"Share" and the Web Share API code behind them — Download and Create card link cover what Share was doing.
+- Added "Preview as recipient" on the Preview step: it opens the actual `EnvelopeReveal` + `CardPreview` experience, using whatever I've built so far, right inside the builder, no link required. This gave the Preview step real content for the first time, and doubles as a way to sanity-check a card before sharing it for real.
+- Demoted "Download card" to a secondary, outlined style so "Create card link" reads as the headline action on that step.
+- Vertically centered each step's content in the builder panel instead of leaving it stuck at the top with empty space below — most steps just don't have much content, and centering makes that read as a calm layout instead of an unfinished one.
+- Gave the dark preview panel background a few soft layered gradients instead of one flat color.
+
+What I learned:
+
+- Asking for feedback on my own work, instead of only reacting to what looked obviously broken, surfaced things I'd stopped noticing because I'd been looking at the same screens for hours.
+- The empty-space problem and the "Preview step has nothing in it" problem turned out to be the same problem solved by the same fix — adding real content to Preview made it worth keeping as its own step, which I almost solved by just removing the step instead.
+- Reusing a component (`EnvelopeReveal`) in a second context (the builder, not just the recipient route) immediately surfaced a real bug: the overlay it lives in bled across the whole mobile page because `.preview-panel` switches to `position: static` under 900px, and `position: absolute; inset: 0` needs a positioned ancestor to mean what I wanted it to mean. Changing that one breakpoint rule to `position: relative` fixed it without giving up the reason it was static-ish in the first place (canceling the desktop sticky behavior).
+- A mid-test screenshot that looks visually wrong (a couple of my screenshots rendered oddly small) isn't automatically a real bug — checking the actual computed layout sizes before chasing it confirmed it was a screenshot-capture timing quirk, not the app.
+
+How I tested it:
+
+- Walked the full wizard on desktop, opened "Preview as recipient," confirmed the envelope/chime/confetti experience plays correctly using live in-progress data, closed it, and confirmed Download still works afterward (the card's DOM reference doesn't get disturbed by the overlay mounting on top of it).
+- Confirmed zero "Share" buttons remain anywhere in the app.
+- Repeated the same flow on an iPhone-sized mobile viewport and caught the overlay bleeding past the preview panel before fixing it, then reran the mobile check clean.
+
+Related commit: `feat: UI polish - remove Share, preview-as-recipient, layout/background`
+
+### June 23, 2026: Happy Birthday Tune on Open
+
+The short two-note chime on open was a placeholder for the real thing: actual birthday music. I upgraded it to a synthesized rendition of "Happy Birthday to You" instead of finding an audio file somewhere, for the same reason the chime was synthesized in the first place — no asset to license, nothing to load. It's also worth knowing the song itself has been public domain in the US since a 2015 court ruling found Warner/Chappell's copyright claim invalid, so even using a recording would have been fine; synthesizing it just kept the approach consistent with everything else in this phase.
+
+It's 25 notes across four phrases, built on the same oscillator-plus-gain-envelope approach as the chime, just scheduled in sequence instead of two overlapping notes. It plays once, about 7.5 seconds, when the envelope is tapped — same trigger point as before, so it still rides the same user gesture that satisfies browsers' audio autoplay rules.
+
+What changed:
+
+- Replaced `playOpenChime` in `src/lib/sound.ts` with `playBirthdayTune`, a 25-note melody table plus a small scheduling loop.
+- `EnvelopeReveal` now calls the tune instead of the chime on open. Since the builder's "Preview as recipient" reuses the same component, the tune plays there too, for free.
+
+What I learned:
+
+- Verifying "the melody plays" needed more than checking the code looked musically right. I instrumented `AudioContext.prototype.createOscillator` in the browser to actually count how many notes got scheduled, confirmed it was 25, and ran the same check through both entry points (the real `/card` link and the builder's recipient preview) rather than assuming the second one would just work because it shares the component.
+
+How I tested it:
+
+- Counted scheduled notes via the oscillator instrumentation above: 25 on the real card link, 25 via the builder's "Preview as recipient."
+- Confirmed the card stays revealed and stable for several seconds after the tune finishes, with no console errors in either path.
+
+Related commit: `feat: play Happy Birthday tune on envelope open`
+
+### June 23, 2026: Making It Upbeat, and Floating Balloons
+
+The melody was correct but it sounded calm, almost like a music box — not the celebratory feeling I actually wanted. I asked for it to be upbeat and fun, and to bring back an idea from the original roadmap that never got built: floating balloons alongside the confetti.
+
+For the music, I didn't reach for an audio file — same reasoning as before, no asset to license or load. Instead I sped the tempo up (about 5.5s instead of 7.5s for the same notes), switched the melody's oscillator from a plain sine wave to a triangle wave for a brighter tone, and added a simple root/fifth bass pulse underneath at a lower volume — the classic "oom-pah" pattern that gives a lot of festive/party music its bounce, without needing to model real chords or harmony.
+
+For the balloons, I reused the exact same pattern as the confetti burst: a fixed array of pieces, each with CSS custom properties for position, color, delay, and a bit of horizontal drift, animated with one keyframe and gated behind `prefers-reduced-motion` right alongside the confetti.
+
+What changed:
+
+- `playTone` in `src/lib/sound.ts` now accepts `gain`/`waveform` options, so the melody and the new bass layer can sound different from each other instead of being identical sine beeps.
+- `playBirthdayTune` now schedules the melody on a triangle wave plus a steady low root/fifth bass pulse for the whole length of the tune.
+- `EnvelopeReveal` renders a new `.balloon-burst` layer of seven CSS balloon shapes (ellipse plus a thin string) that rise and sway on open, similar to but visually distinct from the confetti.
+
+What I learned:
+
+- "Make it upbeat" turned out to mean three separate, fairly small levers — tempo, timbre, and a rhythm layer — rather than one big change. None of them individually would have done much; together they changed the character a lot.
+- Reusing the confetti's exact pattern for balloons (array of pieces + CSS custom properties + one keyframe) made this fast to build, since the hard part — staggering pieces, respecting reduced motion, picking varied colors — was already solved once.
+- Checking "did the note count change correctly" is something I can verify precisely (counted oscillators), but checking "does this sound more fun" isn't something I can verify myself at all — that one's genuinely for a human to judge by actually listening.
+
+How I tested it:
+
+- Counted oscillators again after the change: 51 per play (25 melody notes + 26 bass beats), confirming the bass layer is actually scheduled, not just present in the code.
+- Confirmed all 7 balloon pieces render, are visually distinct floating shapes mid-animation, and fade to zero opacity by the end, with no console errors - on both the real card link and the builder's recipient preview.
+
+Related commits: `feat: make the birthday tune upbeat - faster tempo, brighter tone, bass`, `feat: add floating balloon animation on envelope open`
+
+### June 23, 2026: Slowing Down for a Premium Feel
+
+I got detailed direction on the celebration sequence as a whole: slow everything down, give it a real beginning-middle-end shape (anticipation, then the open, then the celebration), and make sure no single effect overwhelms the card itself. This was less about adding anything new and more about pacing and restraint - the opposite instinct from the last few rounds.
+
+I reworked the whole thing as a timeline instead of a pile of independent effects that all start at once:
+
+- A 450ms anticipation pause after the tap, before anything visibly moves, with just a small seal pulse as the only cue that something's about to happen. Skipped for `prefers-reduced-motion`, since a silent pause with nothing animating would just read as the app being slow, not as a deliberate beat.
+- The flap's rotation became a real `@keyframes` animation instead of a plain transition, so I could grow then fade its shadow alongside the rotation - meant to feel like a flap physically lifting off the back panel, not just spinning.
+- The card now slides up out of the envelope and settles with a slight overshoot ("back" easing), instead of just fading and scaling in place.
+- Confetti waits until the card has mostly settled before it starts, and now bursts from two small clusters near the card's left and right edges instead of raining across the full width - varied sizes and speeds per piece instead of identical squares.
+- Balloons join in after the confetti burst, not at the same time, rising from the bottom corners with a side-to-side sway instead of a straight climb, capped at 5 on screen.
+
+What I learned:
+
+- Sequencing effects on a shared timeline (anticipation → flap → card → confetti → balloons, each waiting for the previous to be mostly done) reads as one coherent moment in a way that five things firing at once never could, even though most of the individual pieces were already built.
+- I found a real bug in the balloons by checking actual computed positions, not by re-reading the CSS: they start at `bottom: -18%`, below the visible card, and with the slower rise I'd just added, they hadn't climbed far enough to clear that starting offset for several seconds - so for a while they were technically animating but invisible. Screenshots taken at exactly the wrong moments would have told me this was "working." Pulling `getBoundingClientRect()` against the card's real box at a specific timestamp is what actually caught it.
+- "Make it slower" sounds like one knob, but every layer had its own version of the problem: the flap's duration, the card's delay, confetti's start condition, and balloons' delay all needed to move together, or pieces would fight each other on what should clearly be a single moment.
+
+How I tested it:
+
+- Polled the DOM every 100ms after a tap to confirm the anticipation pause and the audio cue line up with the phase change exactly where expected, rather than trusting that the code's timing constants matched what actually renders.
+- Took screenshots at chosen points across the full sequence (anticipation, flap mid-rotation, card sliding in, confetti, balloons, fully settled) and read each one rather than assuming the last one (fully settled) being clean meant the whole sequence was fine.
+- Re-ran the full existing regression set after this rewrite: mobile horizontal overflow (still 0, both at rest and mid-celebration), the builder's "Preview as recipient" overlay still followed by a working "Download card," and `prefers-reduced-motion` opening instantly with both effect layers hidden.
+
+Related commit: `feat: redesign the celebration sequence for a slower, premium feel`
+
+### June 23, 2026: Letting the Celebration Use the Whole Panel
+
+One more round of feedback on the same sequence: the confetti and balloons were both confined to the card's own narrow column, when the preview panel around the card is noticeably wider. The ask was to let confetti fall across the whole section, slow it down further, and make the balloons - which were already floating beside the card - actually look like balloons instead of plain ellipses.
+
+The fix was mostly about where the effect layers are positioned, not the pieces themselves: `.confetti-burst` and `.balloon-burst` were sized to exactly match the card's own box (`inset: 0`), so anything inside them was clipped at the card's edges no matter how I positioned individual pieces. I enlarged both layers well past the card, into the panel's side margins, and let the *panel's* existing `overflow: hidden` do the clipping instead of the card's.
+
+What changed:
+
+- Confetti: 20 pieces spread across the full width instead of two edge clusters, bigger, and roughly twice as slow per piece.
+- Balloons: moved into the panel's side margins so they read as floating beside the card rather than just past its literal edge, and redesigned with a glossy highlight, a drop shadow, and a small triangular knot instead of a flat ellipse.
+
+What I learned:
+
+- Enlarging the effect layers introduced a fresh version of a bug I'd already fixed once for balloons: the pieces' starting position moved into a "dead zone" above the panel's visible clipping area, so confetti was invisible for the first stretch of its fall even though the animation code was completely correct. Same root cause as before (start position outside the visible clip region), just reintroduced by a different change. That's a pattern worth remembering for any future layer I enlarge this way: check where its content actually starts relative to where it gets clipped, every time, not just once.
+- Checking a layer's `getBoundingClientRect()` against its clipping ancestor's is a much faster way to catch this than scrubbing through screenshots guessing why something "isn't showing up yet."
+
+How I tested it:
+
+- Measured the confetti layer's and the preview panel's actual bounding boxes to find the exact pixel gap causing the invisibility, rather than guessing at a fix.
+- Took screenshots across the sequence again after the fix and could see confetti and balloons clearly in the panel's side margins, not just within the card's column.
+- Re-ran the full regression set (mobile overflow, builder overlay → download, reduced motion) to confirm enlarging these layers didn't break anything outside their own visuals.
+
+Related commit: `feat: confetti spans the whole preview section, nicer slower balloons`
+
+### June 23, 2026: Finishing the Sequence's Rhythm
+
+Three smaller, precise notes on the same sequence: the music was firing too early (right as the envelope opens, before the recipient has actually seen the card), the balloons were overlapping with confetti instead of following it, and there were too many balloons for what's supposed to be a closing moment.
+
+What changed:
+
+- Music now waits 3 seconds after the card has actually settled into view, instead of starting the instant the envelope begins opening. I detached `playBirthdayTune` from the phase-change timeout entirely and gave it its own delay (card settle time, which already exists as a CSS timing constant, plus the new 3s pause).
+- Balloons now wait until every single confetti piece has completely finished falling - not just until the initial burst - before they start. I had to actually calculate the latest confetti piece's full end time (its stagger plus its duration) rather than guess at a delay that felt about right.
+- Cut from 5 balloons to 2, but much bigger (58x72px, up from 34x42px) - they're a deliberate final beat now, not a small crowd in the background.
+
+What I learned:
+
+- "After all the confetti" is a precise condition, not a vibe - I had to actually sum stagger + duration across all 20 confetti pieces to find the true latest finish time (5.9s) rather than eyeball a delay that looked roughly right. Guessing here would have meant some confetti was still visibly falling when balloons started, defeating the entire point of the request.
+- Decoupling the music's timing from the visual phase change (rather than firing it inside the same timeout) made it easy to give it an independent delay without having to also shift when the envelope itself opens.
+
+How I tested it:
+
+- Instrumented oscillator creation to find the exact moment the first note plays, confirmed it lines up with card-settle-time plus 3 seconds (and just 3 seconds flat under reduced motion, which has no settle delay to add).
+- Confirmed exactly 2 balloon pieces render, with a computed `animation-delay` of 6s and 6.25s - after the 5.9s point where the last confetti piece finishes, not before.
+- Looked at a cropped, zoomed screenshot rather than a full-page one, since at the unzoomed scale I'd been using I initially couldn't tell whether the second balloon was rendering at all - it was, just smaller and further toward the screenshot's edge than was obvious at a glance.
+
+Related commit: `feat: delay music after card appears, balloons blow up post-confetti`
+
+### June 23, 2026: Stickers and Tags Become Opt-In
+
+A real builder-side change this time, not the recipient experience. Every card used to start with all five decorative items - cake, flowers, balloons, gift, the Happy Birthday ribbon - already placed on it, in a per-template default arrangement. The ask was to flip that: start blank, and let the person building the card choose which of those they actually want from a picker under Customize, then drag whichever ones they add anywhere on the card.
+
+Before touching any code, I wrote out what I thought the change involved and asked three scope questions, since this one had real branching decisions: should "variety" mean the existing five or brand-new artwork, can the same sticker be added more than once, and does "tags" include the date badge or just the ribbon. All three came back as the simpler option, which kept this from growing into a much bigger feature than asked for.
+
+What changed:
+
+- A new `activeStickerIds` list in the builder's state, starting empty. It's global, not per-template, so switching styles doesn't wipe out what you've already added.
+- `CardPreview` now renders each sticker/tag conditionally instead of unconditionally - everything else about how an item looks or drags is untouched.
+- Toggling a sticker off only hides it. Its position was already being tracked in `movableLayouts` regardless of visibility, so toggling it back on puts it right back where it was dragged, not back at the template's default spot.
+- Shareable links now carry which stickers the sender picked, so the recipient sees exactly that set - not a generic default. The no-link demo card still shows all five, so it still reads as a finished example instead of a bare one.
+
+What I learned:
+
+- Asking scope questions before writing code paid off immediately: the "could the data model need to support multiple copies of the same sticker" question, if answered the harder way, would have meant reworking positions from a fixed set of named slots into a list of placed instances - a much bigger change hiding behind a casually-phrased request.
+- This is the first feature in this project where I changed default behavior for everyone, not just added something new - worth being more careful that I checked both the no-link demo path and the real shared-link path, since they now genuinely diverge (all five vs. only what was chosen) on purpose.
+
+How I tested it:
+
+- Confirmed a brand new card renders zero stickers, then that toggling each one in the picker adds/removes it from the live preview.
+- Dragged a sticker, toggled it off, toggled it back on, and confirmed its position - not the template default - by reading the actual computed style values, not just eyeballing it.
+- Checked that the builder's "Preview as recipient" overlay and a real generated card link both show exactly the toggled-on set, and that the no-link demo card still shows all five.
+
+Related commit: `feat: make stickers and tags opt-in instead of always-on`
+
+### June 23, 2026: Real Sticker Art, No More Tag
+
+Quick follow-up to the opt-in stickers feature: drop the Happy Birthday tag entirely, show each sticker's actual artwork in the picker instead of a generic color swatch, drop the text labels since the art should speak for itself, and add explicit instructions for the click-to-toggle interaction.
+
+Removing the tag meant going further than just deleting it from the picker list - it had its own entry in the position data for every template, its own CSS color variable, and roughly a dozen per-template style overrides (rotation, position tweaks, a skewed shadow for the Pop Art template) scattered across the stylesheet. I went through and removed all of them rather than leaving dead rules behind.
+
+For the picker showing real artwork, I didn't want to duplicate each sticker's SVG markup in two places (the live card and the picker preview) - that's exactly the kind of thing that quietly drifts out of sync the first time either one gets edited. I pulled the actual path/shape content out of `CardPreview` into a shared module, `stickerGraphics.tsx`, that both the live draggable sticker and the static picker preview import from. The picker now renders the exact same artwork, just smaller and non-interactive.
+
+What changed:
+
+- The Happy Birthday ribbon/tag is gone completely - from the data model, the card, and every per-template CSS override that referenced it.
+- New `src/lib/stickerGraphics.tsx` holds each sticker's SVG content once; `CardPreview` and the Customize picker both read from it.
+- Picker buttons show the real sticker art, no text label, with an `aria-label` ("Add cake to the card" / "Remove cake from the card") carrying the accessible name that used to be visible text.
+- Added explicit guidance under Customize: "Click a sticker to add it to the card, or click it again to remove it."
+- The active/pressed state on a picker button is now a light tint and border instead of a solid dark fill, so the sticker's own colors don't get covered up.
+
+What I learned:
+
+- "Remove X completely" is a good prompt to actually grep for every reference rather than just deleting the one place I added it - it turned up far more scattered CSS than I expected, including styling I'd forgotten was specific to the tag (a skewed drop-shadow only on the Pop Art template).
+- My own test scripts from the previous step broke the moment I removed the visible text labels, since they were selecting buttons by their text. That's a real signal, not just test maintenance: anything else in the app that assumed those buttons had visible text (which nothing did, fortunately) would have broken too. I rewrote the checks to select by accessible name instead, which is also a better practice going forward since it matches what a screen reader user would actually have available.
+
+How I tested it:
+
+- Confirmed zero "ribbon" references remain anywhere in the source, and exactly 4 picker buttons render with no visible text.
+- Re-ran the drag-then-toggle-persistence check and the link/overlay round-trip check from the previous step, rewritten to target buttons by `aria-label` instead of visible text.
+- Confirmed the no-link demo card now shows 4 stickers instead of 5, matching the smaller catalog.
+
+Related commit: `feat: remove the Happy Birthday tag, show real sticker art in the picker`
+
+### June 23, 2026: A Closing Text Flourish
+
+One more addition to the celebration sequence: an animated "Happy Birthday" text as the final beat. I personalized it using the `recipientName` prop that was already being passed into `EnvelopeReveal` for the envelope's "To:" label and aria text, so it reads "Happy Birthday, Ada!" rather than a generic phrase.
+
+This one breaks a rule I'd been holding to for every other effect in this sequence: confetti and balloons were deliberately kept off the card's own content. I let this one overlay the card directly, because it's meant to be a brief "and there it is" climax, not a persistent decoration - it bounces in, holds for a couple seconds with a subtle pulse, then fades completely, leaving the card fully readable again. The temporariness is what makes covering the content acceptable here in a way it wouldn't have been for confetti sitting on top of the message indefinitely.
+
+What changed:
+
+- A new `.finale-text` layer in `EnvelopeReveal`, arriving 7 seconds into the open phase - after the balloons have already started, not at the very beginning - and fading out roughly 3.4 seconds later.
+- Hidden entirely under `prefers-reduced-motion`, consistent with the confetti and balloon layers.
+
+What I learned:
+
+- Not every new effect needs to follow the same constraint as the ones before it. The "don't cover the content" rule made sense for decorations meant to coexist with the card; it didn't apply to a flourish whose entire job is to be a temporary climax and then get out of the way.
+
+How I tested it:
+
+- Checked the text's computed opacity at several timestamps to confirm it's hidden early, visible by the expected moment, and faded again afterward - not just that the keyframes look right on paper.
+- Confirmed it's personalized correctly with the recipient's name, hidden under `prefers-reduced-motion`, and that the existing mobile/download regression checks still pass.
+
+Related commit: `feat: animated "Happy Birthday" text as the celebration's closing flourish`
 
 ## What I Learned So Far
 
