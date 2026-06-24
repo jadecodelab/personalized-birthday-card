@@ -20,8 +20,15 @@ type ApiResponse = {
   json: (body: unknown) => void;
 };
 
-const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+// Strips accidental wrapping quotes - a common copy/paste mistake when an
+// env var's value is lifted from a dashboard that displays it pre-quoted
+// (e.g. `"https://...upstash.io"`), which otherwise breaks URL parsing.
+function stripWrappingQuotes(value: string | undefined): string | undefined {
+  return value?.replace(/^['"]|['"]$/g, "");
+}
+
+const UPSTASH_URL = stripWrappingQuotes(process.env.UPSTASH_REDIS_REST_URL);
+const UPSTASH_TOKEN = stripWrappingQuotes(process.env.UPSTASH_REDIS_REST_TOKEN);
 
 const RATE_LIMIT_PER_MINUTE = 10;
 const MAX_PAYLOAD_LENGTH = 400_000;
@@ -153,8 +160,8 @@ async function handlePost(req: ApiRequest, res: ApiResponse) {
     const id = await saveCard(payload);
 
     res.status(201).json({ id });
-  } catch (error) {
-    res.status(500).json({ error: "Could not create the link.", detail: String(error) });
+  } catch {
+    res.status(500).json({ error: "Could not create the link." });
   }
 }
 
@@ -175,8 +182,8 @@ async function handleGet(req: ApiRequest, res: ApiResponse) {
     }
 
     res.status(200).json(payload);
-  } catch (error) {
-    res.status(500).json({ error: "Could not load the card.", detail: String(error) });
+  } catch {
+    res.status(500).json({ error: "Could not load the card." });
   }
 }
 
