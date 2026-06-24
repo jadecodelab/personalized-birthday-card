@@ -35,18 +35,18 @@ export function compressImageToDataUrl(
 }
 
 const LINK_PHOTO_COMPRESSION_STEPS = [
-  { maxDimension: 640, quality: 0.78 },
-  { maxDimension: 480, quality: 0.68 },
-  { maxDimension: 360, quality: 0.55 },
+  { maxDimension: 900, quality: 0.82 },
+  { maxDimension: 700, quality: 0.72 },
+  { maxDimension: 500, quality: 0.6 },
 ];
 
-// Raised from the original 40KB cap, which forced photos down to 320px/0.6
-// and looked visibly blurry once displayed at the card's actual size. Still
-// a hard backstop against pathological inputs blowing up the link, just a
-// more generous one now that real-world links at this size are confirmed
-// fine to share via chat apps and email (the URL lives in the fragment, so
-// it never touches the server either way).
-const MAX_LINK_PHOTO_LENGTH = 140_000;
+// Raised again now that the photo travels in a POST body to short-link
+// storage (api/cards.ts) instead of being inlined into a URL - no more
+// fragment-length concerns. Still a real cap, not "as generous as
+// possible": cards are stored with no expiry, so every byte allowed in is
+// committed to the free-tier storage budget forever. Kept with headroom
+// under api/cards.ts's 400,000-character total-payload cap.
+const MAX_LINK_PHOTO_LENGTH = 320_000;
 
 // Tries progressively smaller/lower-quality compression until the result
 // fits in a shareable link. Returns null if even the smallest attempt is

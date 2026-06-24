@@ -22,7 +22,7 @@ import {
   type MovablePoint,
   type ResizeCorner,
 } from "../lib/cardData";
-import { buildCardShareUrl, type SharedCardPayload } from "../lib/cardLink";
+import { createShortCardLink, type SharedCardPayload } from "../lib/cardLink";
 import { compressPhotoForLink } from "../lib/photoCompression";
 import { stickerGraphicContent, stickerGraphicViewBox } from "../lib/stickerGraphics";
 
@@ -757,7 +757,7 @@ export default function CreatePage() {
         photoScale: selectedPhotoScale,
         photoDataUrl,
       };
-      const shareUrl = buildCardShareUrl(payload);
+      const shareUrl = await createShortCardLink(payload);
 
       setCardLink(shareUrl);
 
