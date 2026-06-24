@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { playBirthdayTune } from "../lib/sound";
 
 type EnvelopeRevealProps = {
@@ -60,6 +60,27 @@ export default function EnvelopeReveal({
 }: EnvelopeRevealProps) {
   const [phase, setPhase] = useState<RevealPhase>("closed");
 
+  // Tracks every in-flight setTimeout from the current open sequence so a
+  // replay can cancel a still-pending music cue from the previous one
+  // instead of letting both fire.
+  const pendingTimeoutIds = useRef<number[]>([]);
+
+  useEffect(() => {
+    return () => {
+      pendingTimeoutIds.current.forEach((id) => window.clearTimeout(id));
+    };
+  }, []);
+
+  function clearPendingTimeouts() {
+    pendingTimeoutIds.current.forEach((id) => window.clearTimeout(id));
+    pendingTimeoutIds.current = [];
+  }
+
+  function scheduleTimeout(callback: () => void, delay: number) {
+    const id = window.setTimeout(callback, delay);
+    pendingTimeoutIds.current.push(id);
+  }
+
   function handleOpen() {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -67,86 +88,108 @@ export default function EnvelopeReveal({
 
     if (prefersReducedMotion) {
       setPhase("open");
-      window.setTimeout(playBirthdayTune, MUSIC_DELAY_AFTER_CARD_MS);
+      scheduleTimeout(playBirthdayTune, MUSIC_DELAY_AFTER_CARD_MS);
       return;
     }
 
     setPhase("anticipating");
-    window.setTimeout(() => {
+    scheduleTimeout(() => {
       setPhase("open");
-      window.setTimeout(
+      scheduleTimeout(
         playBirthdayTune,
         CARD_SETTLE_MS + MUSIC_DELAY_AFTER_CARD_MS,
       );
     }, ANTICIPATION_PAUSE_MS);
   }
 
+  // Resets to "closed" and waits two animation frames before reopening, so
+  // the browser actually repaints the closed envelope in between - without
+  // that gap, React batches both state changes into one render and the CSS
+  // open-state animations (confetti, balloons, flap, finale text) never
+  // restart since their trigger class never visibly toggled off.
+  function handleReplay() {
+    clearPendingTimeouts();
+    setPhase("closed");
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(handleOpen);
+    });
+  }
+
   return (
-    <div
-      className={`envelope-reveal envelope-reveal--${phase}`}
-    >
-      <div className="envelope-reveal-card" aria-hidden={phase !== "open"}>
-        {children}
+    <div className="envelope-reveal-wrapper">
+      <div className={`envelope-reveal envelope-reveal--${phase}`}>
+        <div className="envelope-reveal-card" aria-hidden={phase !== "open"}>
+          {children}
+        </div>
+        <button
+          type="button"
+          className="envelope"
+          onClick={handleOpen}
+          disabled={phase !== "closed"}
+          aria-label={`Open the birthday card for ${recipientName}`}
+        >
+          <span className="envelope-back" aria-hidden="true" />
+          <span className="envelope-flap" aria-hidden="true">
+            <span className="envelope-seal" aria-hidden="true" />
+          </span>
+          <span className="envelope-front" aria-hidden="true">
+            <span className="envelope-to">To: {recipientName}</span>
+            <span className="envelope-prompt">Tap to open</span>
+          </span>
+        </button>
+        <div className="confetti-burst" aria-hidden="true">
+          {CONFETTI_PIECES.map((piece, index) => (
+            <span
+              key={index}
+              className="confetti-piece"
+              style={
+                {
+                  "--piece-left": piece.left,
+                  "--piece-color": piece.color,
+                  "--piece-width": piece.width,
+                  "--piece-height": piece.height,
+                  "--piece-stagger": piece.stagger,
+                  "--piece-burst-x": piece.burstX,
+                  "--piece-drift-x": piece.driftX,
+                  "--piece-fall-y": piece.fallY,
+                  "--piece-rotate": piece.rotate,
+                  "--piece-duration": piece.duration,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
+        <div className="balloon-burst" aria-hidden="true">
+          {BALLOON_PIECES.map((piece, index) => (
+            <span
+              key={index}
+              className="balloon-piece"
+              style={
+                {
+                  "--balloon-left": piece.left,
+                  "--balloon-color": piece.color,
+                  "--balloon-stagger": piece.stagger,
+                  "--balloon-drift": piece.drift,
+                  "--balloon-tilt": piece.tilt,
+                  "--balloon-duration": piece.duration,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
+        <div className="finale-text" aria-hidden="true">
+          <span>Happy Birthday, {recipientName}!</span>
+        </div>
       </div>
-      <button
-        type="button"
-        className="envelope"
-        onClick={handleOpen}
-        disabled={phase !== "closed"}
-        aria-label={`Open the birthday card for ${recipientName}`}
-      >
-        <span className="envelope-back" aria-hidden="true" />
-        <span className="envelope-flap" aria-hidden="true">
-          <span className="envelope-seal" aria-hidden="true" />
-        </span>
-        <span className="envelope-front" aria-hidden="true">
-          <span className="envelope-to">To: {recipientName}</span>
-          <span className="envelope-prompt">Tap to open</span>
-        </span>
-      </button>
-      <div className="confetti-burst" aria-hidden="true">
-        {CONFETTI_PIECES.map((piece, index) => (
-          <span
-            key={index}
-            className="confetti-piece"
-            style={
-              {
-                "--piece-left": piece.left,
-                "--piece-color": piece.color,
-                "--piece-width": piece.width,
-                "--piece-height": piece.height,
-                "--piece-stagger": piece.stagger,
-                "--piece-burst-x": piece.burstX,
-                "--piece-drift-x": piece.driftX,
-                "--piece-fall-y": piece.fallY,
-                "--piece-rotate": piece.rotate,
-                "--piece-duration": piece.duration,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
-      <div className="balloon-burst" aria-hidden="true">
-        {BALLOON_PIECES.map((piece, index) => (
-          <span
-            key={index}
-            className="balloon-piece"
-            style={
-              {
-                "--balloon-left": piece.left,
-                "--balloon-color": piece.color,
-                "--balloon-stagger": piece.stagger,
-                "--balloon-drift": piece.drift,
-                "--balloon-tilt": piece.tilt,
-                "--balloon-duration": piece.duration,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
-      <div className="finale-text" aria-hidden="true">
-        <span>Happy Birthday, {recipientName}!</span>
-      </div>
+      {phase === "open" && (
+        <button
+          type="button"
+          className="envelope-replay-button"
+          onClick={handleReplay}
+        >
+          Watch it open again
+        </button>
+      )}
     </div>
   );
 }

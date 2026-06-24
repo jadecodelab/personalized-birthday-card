@@ -35,14 +35,18 @@ export function compressImageToDataUrl(
 }
 
 const LINK_PHOTO_COMPRESSION_STEPS = [
-  { maxDimension: 320, quality: 0.6 },
-  { maxDimension: 240, quality: 0.5 },
-  { maxDimension: 180, quality: 0.4 },
+  { maxDimension: 640, quality: 0.78 },
+  { maxDimension: 480, quality: 0.68 },
+  { maxDimension: 360, quality: 0.55 },
 ];
 
-// Comfortably above the ~15KB worst case seen from busy real-world photos,
-// but still a hard backstop against pathological inputs blowing up the link.
-const MAX_LINK_PHOTO_LENGTH = 40_000;
+// Raised from the original 40KB cap, which forced photos down to 320px/0.6
+// and looked visibly blurry once displayed at the card's actual size. Still
+// a hard backstop against pathological inputs blowing up the link, just a
+// more generous one now that real-world links at this size are confirmed
+// fine to share via chat apps and email (the URL lives in the fragment, so
+// it never touches the server either way).
+const MAX_LINK_PHOTO_LENGTH = 140_000;
 
 // Tries progressively smaller/lower-quality compression until the result
 // fits in a shareable link. Returns null if even the smallest attempt is

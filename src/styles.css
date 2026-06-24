@@ -631,12 +631,37 @@ textarea {
   outline: none;
 }
 
+.envelope-reveal-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
 .envelope-reveal {
   position: relative;
   width: 100%;
   max-width: 400px;
   aspect-ratio: 9 / 16;
   margin: 0 auto;
+}
+
+.envelope-replay-button {
+  padding: 10px 22px;
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.32);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.envelope-replay-button:hover {
+  background: rgb(255 255 255 / 0.22);
+  border-color: rgb(255 255 255 / 0.5);
 }
 
 .envelope-reveal-card {
@@ -947,10 +972,10 @@ textarea {
 }
 
 /* Arrives once the balloons are already underway - the celebration's
-   closing flourish, not something the recipient has to wait through the
-   whole sequence to see, then fades to leave the card visible again. */
+   closing flourish - and holds in place on top of the card instead of
+   fading back out, so it's the last thing the recipient sees. */
 .envelope-reveal--open .finale-text span {
-  animation: finale-text-pop 3.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: finale-text-pop 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   animation-delay: 7s;
 }
 
@@ -959,26 +984,16 @@ textarea {
     opacity: 0;
     transform: scale(0.4) rotate(-4deg);
   }
-  18% {
+  55% {
     opacity: 1;
     transform: scale(1.08) rotate(1deg);
   }
-  28% {
-    transform: scale(1) rotate(0deg);
-  }
-  45% {
-    transform: scale(1.04) rotate(0deg);
-  }
-  60% {
-    transform: scale(1) rotate(0deg);
-  }
-  82% {
-    opacity: 1;
+  75% {
     transform: scale(1) rotate(0deg);
   }
   100% {
-    opacity: 0;
-    transform: scale(0.92) rotate(0deg);
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
 }
 
