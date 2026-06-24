@@ -335,9 +335,18 @@ const SYNTH_FALLBACKS: Record<SoundCue, () => void> = {
 // real assets are sourced - see PROJECT_JOURNAL), falls back to synthesis on
 // any load/playback failure, and never throws even if Audio/Web Audio are
 // both unavailable.
+// Keeps exactly one live reference per cue so an actively-playing element
+// can't become eligible for garbage collection just because the function
+// that created it returned - a real risk for melody's ~60s runtime, even if
+// browsers usually (not guaranteed) keep playing media alive regardless.
+const activeAudioElements: Partial<Record<SoundCue, HTMLAudioElement>> = {};
+
 export function playSound(cue: SoundCue) {
   try {
     const audio = new Audio(SOUND_FILES[cue]);
+
+    activeAudioElements[cue] = audio;
+
     let fellBack = false;
 
     const useFallback = () => {
@@ -349,7 +358,17 @@ export function playSound(cue: SoundCue) {
       SYNTH_FALLBACKS[cue]();
     };
 
+    // Only a failure to *start* playback should trigger the synthesized
+    // fallback. Once "playing" fires, stop listening for "error" - a
+    // transient network hiccup partway through a long file (far more likely
+    // over ~60s than ~1s) would otherwise layer the synthesized version on
+    // top of audio that had already started correctly.
     audio.addEventListener("error", useFallback, { once: true });
+    audio.addEventListener(
+      "playing",
+      () => audio.removeEventListener("error", useFallback),
+      { once: true },
+    );
     audio.play()?.catch(useFallback);
   } catch {
     SYNTH_FALLBACKS[cue]();
