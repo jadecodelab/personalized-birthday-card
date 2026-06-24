@@ -654,6 +654,57 @@ How I tested it:
 
 Related commit: `feat: animated "Happy Birthday" text as the celebration's closing flourish`
 
+### June 24, 2026: A Premium, Cinematic Envelope Reveal
+
+I'd already shipped a working envelope/confetti/balloon/chime sequence, but stepping back and watching it cold, it read as mechanical rather than a moment - effects fired close together instead of one clearly causing the next, the confetti was a single flat layer, balloons were CSS color blobs, the finale text popped like a sticker, and the "Happy Birthday" tune was an obviously synthesized chime. I asked for a full critique before any code: what's actually wrong, phase by phase, and a concrete plan to fix it - not a rewrite from a vibe.
+
+The critique found one real structural bug underneath all the surface complaints: the flap's rotation, the envelope's own fade, and the card's rise were all animating inside the same half-second window, because everything was keyed off one shared "open" class instead of a real sequence. The fix was a full 8-phase state machine (arrival → interaction → opening → revealing → celebrating → ballooning → message → ending), each phase timed from a single table anchored to the tap, so the whole sequence reads top-to-bottom instead of being chased through nested callbacks.
+
+What changed:
+
+- Replaced the 3-state machine with the 8 named phases above; `data-reached-<phase>` attributes (cumulative, never removed until replay) let later phases keep earlier animations like confetti and balloon-rise running instead of cutting them off.
+- Confetti got three depth tiers (blurred/slow/dim background through sharp/fast/bright foreground) via CSS custom properties on the same piece, not new shapes.
+- Balloons are now real SVG art (reused from the sticker artwork already in `stickerGraphics.tsx`) that rise from the bottom corners and settle into a continuous gentle sway instead of vanishing off-screen.
+- The finale text switched to a handwriting font (Caveat, via Google Fonts) in a warm maroon, with a calm rise instead of a bold scale-pop, and now holds visible instead of fading back out.
+- A soft warm glow pulses behind the card as it rises, and a few ambient particles drift continuously from the moment the card loads - both first-time additions, not touch-ups to something that existed before.
+- The confetti/balloon palette shifted from bright primary colors to gold/rose-gold/cream, and the whole sequence got noticeably longer and more lingering (about 5.4s tap-to-settled before, about 7.6s now) per direction to slow down rather than rush the payoff.
+- `sound.ts` was restructured around one `playSound(cue)` entry point that tries a real audio file first and only falls back to (now richer) synthesis if the file's missing - rustle, open, chime, sparkle, and melody, each with its own placement in the sequence.
+- Added a "Watch it open again" replay button, and gated the builder-chrome header off the real recipient's view in favor of a soft "Someone made something special for you" line.
+
+What I learned:
+
+- A list of surface complaints ("feels mechanical," "feels generic") is usually one structural bug wearing several costumes - tracing the actual CSS timeline in absolute time, not just rereading each rule in isolation, is what found the real overlap.
+- Z-index choices have consequences beyond what's visually on top: giving the card a higher z-index than the envelope button (so it could visually sit "in front" during the reveal) meant the invisible card was also stealing the tap meant for the envelope, because `pointer-events: none` on a parent doesn't override a more specific `pointer-events: auto` rule already set on something inside it. Keeping the envelope on top in the stacking order and relying on opacity alone to crossfade gave the identical visual result with none of the click-stealing risk.
+- Layering an always-running animation (the balloon sway) on a *child* element instead of trying to combine it into the parent's `animation` property alongside the one-shot rise avoided a subtle restart bug - changing the number of comma-separated animations in one property risks restarting all of them, not just the new one.
+
+How I tested it:
+
+- Drove the actual dev server with a headless browser (not just reading the CSS), clicking the envelope and capturing screenshots at several timestamps across the full ~7.6s sequence to confirm phases were visually sequential rather than overlapping.
+- Caught the z-index click-stealing bug this way: clicking did nothing, and checking `document.elementFromPoint()` at the button's center showed the card's own content intercepting the tap.
+- Verified `prefers-reduced-motion` independently: confirmed it skips straight to a calm opacity-only crossfade with no flap rotation, confetti, or balloon motion, instead of either the old instant-snap or the full animated sequence.
+
+Related commit: `feat: redesign envelope reveal as a premium 8-phase gift-opening moment`
+
+### June 24, 2026: Real Audio for the Celebration
+
+The redesign's audio architecture was built to take real files from day one, but shipped with only the synthesized fallback, since sourcing actual sound effects isn't something an AI assistant can do on its own - it can point at where to look, not pick the right clip. I sourced five royalty-free clips (Pixabay Audio/Mixkit/Freesound, filtered to CC0 only) for paper rustle, the envelope opening, a celebration chime, a sparkle, and a birthday melody, and dropped them straight into `public/sounds/` under the filenames the code already expected.
+
+What changed:
+
+- Added `rustle.mp3`, `open.mp3`, `chime.mp3`, `sparkle.mp3`, and `melody.mp3` to `public/sounds/`. No code changes were needed - `playSound()` was already looking for exactly these paths and using them automatically the moment they exist.
+
+What I learned:
+
+- "Drop the file in and it just works" only holds if the fallback architecture was actually built that way beforehand - the one-line integration here is the payoff of designing `playSound()` around a fixed naming convention earlier, not something that needed wiring up now.
+- `melody.mp3` turned out to be a full 63-second track rather than a short stinger, which the file size alone (2MB vs. 24-82KB for the other four) hinted at before even checking the duration. Worth deciding on purpose rather than assuming a "melody" file should be short - I chose to keep it playing in full, since letting a real song carry the ending phase fits a recipient lingering on the card better than a quick chime would.
+
+How I tested it:
+
+- Loaded the real card link with a headless browser and watched network responses during a full open sequence: all five files returned successfully, none fell back to synthesis, and no console errors were thrown.
+- Checked `melody.mp3`'s actual decoded duration (63s) before deciding whether to trim or fade it, rather than assuming its file size meant something was wrong.
+
+Related commit: `feat: add sourced audio files for the celebration sequence`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
