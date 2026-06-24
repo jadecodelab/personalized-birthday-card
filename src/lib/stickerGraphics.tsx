@@ -10,6 +10,27 @@ export const stickerGraphicViewBox: Record<string, string> = {
   gift: "0 0 140 140",
 };
 
+// A single free-floating balloon, in the same style as the "balloons"
+// sticker above, for the envelope-reveal celebration burst (which needs one
+// balloon per piece, recolored per the card's gift-wrap palette, rather than
+// the sticker's fixed two-balloon pair).
+export function BalloonGraphic({ color }: { color: string }) {
+  return (
+    <svg className="balloon-graphic" viewBox="0 0 60 86" aria-hidden="true">
+      <ellipse cx="30" cy="32" rx="22" ry="28" fill={color} />
+      <circle cx="22" cy="20" r="6" fill="#fffaf0" opacity="0.55" />
+      <path d="M25 58h10l-5 9z" fill={color} />
+      <path
+        d="M30 67c-5 6 4 11 0 19"
+        fill="none"
+        stroke="rgb(255 255 255 / 0.4)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export const stickerGraphicContent: Record<string, ReactNode> = {
   cake: (
     <>

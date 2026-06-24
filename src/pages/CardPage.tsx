@@ -42,14 +42,19 @@ export default function CardPage() {
   return (
     <main className="app-shell">
       <aside className="preview-panel" aria-label="Card preview">
-        <div className="preview-header">
-          <p className="eyebrow">Birthday Card</p>
-          <span>{templateLabel} template</span>
-        </div>
+        {!sharedCard && (
+          <div className="preview-header">
+            <p className="eyebrow">Birthday Card</p>
+            <span>{templateLabel} template</span>
+          </div>
+        )}
         {!sharedCard && (
           <p className="preview-guide">
             This is a demo card. Open a real card link to see one made for you.
           </p>
+        )}
+        {sharedCard && (
+          <p className="arrival-line">Someone made something special for you</p>
         )}
         <EnvelopeReveal recipientName={previewName}>
           <CardPreview
