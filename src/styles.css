@@ -499,8 +499,8 @@ textarea {
   height: 42px;
 }
 
-.preview-panel {
-  align-self: start;
+.preview-panel,
+.recipient-panel {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -513,8 +513,48 @@ textarea {
   border-radius: 8px;
   color: #ffffff;
   overflow: hidden;
+}
+
+.preview-panel {
+  align-self: start;
   position: sticky;
   top: 28px;
+}
+
+/* The standalone recipient view (a real /c/<id> link, or the no-link demo
+   card) isn't part of the two-column builder grid - it's the entire page,
+   so it gets its own shell instead of reusing .app-shell, which would
+   otherwise reserve a second, empty grid column on desktop. */
+.recipient-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 28px;
+}
+
+.recipient-panel {
+  width: 100%;
+  max-width: 480px;
+  margin: auto 0;
+}
+
+@media (max-width: 560px) {
+  /* "Full screen" on a phone: no outer page padding and no rounded-corner
+     framing clipping the experience down to a smaller box - the card fills
+     the actual viewport edge to edge, the way a native app screen would. */
+  .recipient-shell {
+    padding: 0;
+  }
+
+  .recipient-panel {
+    max-width: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+    padding: 20px 16px;
+    justify-content: center;
+  }
 }
 
 .preview-header {

@@ -42,8 +42,8 @@ export default function CardExperience({ sharedCard }: CardExperienceProps) {
   const photoPreviewUrl = sharedCard?.photoDataUrl ?? null;
 
   return (
-    <main className="app-shell">
-      <aside className="preview-panel" aria-label="Card preview">
+    <main className="recipient-shell">
+      <aside className="recipient-panel" aria-label="Card preview">
         {!sharedCard && (
           <div className="preview-header">
             <p className="eyebrow">Birthday Card</p>

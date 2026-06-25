@@ -38,8 +38,8 @@ export default function ShortCardPage() {
   }
 
   return (
-    <main className="app-shell">
-      <aside className="preview-panel" aria-label="Card preview">
+    <main className="recipient-shell">
+      <aside className="recipient-panel" aria-label="Card preview">
         <div className="card-status-message">
           <span
             className={`card-status-envelope ${

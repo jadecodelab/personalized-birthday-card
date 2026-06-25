@@ -145,10 +145,10 @@ type BalloonPieceConfig = {
 // 82-100%) so balloons never cross into the card's central column where the
 // photo/message live.
 const BALLOON_PIECES: BalloonPieceConfig[] = [
-  { left: "4%", color: GOLD, stagger: "0ms", drift: "16px", tilt: "6deg", scale: 1, duration: "2.6s" },
-  { left: "14%", color: CREAM, stagger: "650ms", drift: "-14px", tilt: "-5deg", scale: 0.84, duration: "2.3s" },
-  { left: "93%", color: ROSE_GOLD, stagger: "300ms", drift: "-16px", tilt: "-6deg", scale: 1, duration: "2.7s" },
-  { left: "83%", color: BLUSH, stagger: "850ms", drift: "14px", tilt: "5deg", scale: 0.84, duration: "2.4s" },
+  { left: "0%", color: GOLD, stagger: "0ms", drift: "16px", tilt: "6deg", scale: 1, duration: "2.6s" },
+  { left: "10%", color: CREAM, stagger: "650ms", drift: "-14px", tilt: "-5deg", scale: 0.84, duration: "2.3s" },
+  { left: "89%", color: ROSE_GOLD, stagger: "300ms", drift: "-16px", tilt: "-6deg", scale: 1, duration: "2.7s" },
+  { left: "79%", color: BLUSH, stagger: "850ms", drift: "14px", tilt: "5deg", scale: 0.84, duration: "2.4s" },
 ];
 
 function SpeakerIcon({ muted }: { muted: boolean }) {
