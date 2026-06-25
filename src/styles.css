@@ -1200,24 +1200,26 @@ textarea {
 @keyframes balloon-rise {
   0% {
     opacity: 0;
-    transform: scale(var(--balloon-scale)) translate(0, 0) rotate(0deg);
+    transform: translate(0, 0) scale(var(--balloon-scale)) rotate(0deg);
   }
   100% {
     opacity: 1;
-    transform: scale(var(--balloon-scale))
-      translate(var(--balloon-drift), -148%) rotate(var(--balloon-tilt));
+    /* translate comes first so its distance is a fixed pixel amount, not
+       scaled down for the smaller-scale balloons - scale() afterwards
+       would shrink the rise distance along with the balloon's size,
+       leaving the smaller pieces short of clearing the card-copy box. */
+    transform: translate(var(--balloon-drift), -520%) scale(var(--balloon-scale))
+      rotate(var(--balloon-tilt));
   }
 }
 
+/* Sits below the card as its own block instead of overlaying it - the
+   photo/stickers are movable items the sender can place anywhere, so no
+   fixed position inside the card is guaranteed free of them. */
 .finale-text {
-  position: absolute;
-  inset: 0;
-  z-index: 8;
   display: flex;
-  align-items: flex-start;
   justify-content: center;
-  padding: 9% 9% 0;
-  pointer-events: none;
+  padding: 0 12px;
   text-align: center;
 }
 
@@ -2019,6 +2021,19 @@ textarea {
   .card-preview {
     --media-height: clamp(190px, 40vw, 260px);
     min-height: 0;
+  }
+
+  /* Desktop's extra horizontal slack around the card (the two-column
+     layout's preview-panel is wider than the card) is what makes the
+     burst layers' -24% overscan visible instead of clipped. Once the
+     layout goes single-column, the card fills almost the whole panel
+     width with no margin to spare, so that same overscan pushes balloons
+     past the panel's own overflow: hidden edge - cut off instead of
+     visible in the margins they're meant to float in. */
+  .confetti-burst,
+  .balloon-burst {
+    left: -4%;
+    right: -4%;
   }
 }
 

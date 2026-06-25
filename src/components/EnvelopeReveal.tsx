@@ -228,11 +228,8 @@ export default function EnvelopeReveal({
   }
 
   return (
-    <div className="envelope-reveal-wrapper">
-      <div
-        className={`envelope-reveal envelope-reveal--${phase}`}
-        {...reachedAttributes}
-      >
+    <div className="envelope-reveal-wrapper" {...reachedAttributes}>
+      <div className={`envelope-reveal envelope-reveal--${phase}`}>
         <div className="arrival-particles" aria-hidden="true">
           <span className="arrival-particle arrival-particle--one" />
           <span className="arrival-particle arrival-particle--two" />
@@ -307,9 +304,9 @@ export default function EnvelopeReveal({
             </span>
           ))}
         </div>
-        <div className="finale-text" aria-hidden="true">
-          <span>Happy Birthday, {recipientName}!</span>
-        </div>
+      </div>
+      <div className="finale-text" aria-hidden="true">
+        <span>Happy Birthday, {recipientName}!</span>
       </div>
       {hasReachedPhase(phase, "ending") && (
         <button
