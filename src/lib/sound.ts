@@ -12,11 +12,27 @@ const SOUND_FILES: Record<SoundCue, string> = {
   melody: "/sounds/melody.mp3",
 };
 
+const MUTE_STORAGE_KEY = "birthday-card-sound-muted";
+
+function loadMutedPreference(): boolean {
+  try {
+    return window.localStorage.getItem(MUTE_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+let muted = loadMutedPreference();
+
 let audioContext: AudioContext | null = null;
+let masterGain: GainNode | null = null;
 
 function getAudioContext() {
   if (!audioContext) {
     audioContext = new AudioContext();
+    masterGain = audioContext.createGain();
+    masterGain.gain.value = muted ? 0 : 1;
+    masterGain.connect(audioContext.destination);
   }
 
   if (audioContext.state === "suspended") {
@@ -26,12 +42,52 @@ function getAudioContext() {
   return audioContext;
 }
 
+// Every synthesized sound connects here instead of straight to
+// context.destination, so toggling mute can silence anything already
+// playing (e.g. mid-way through the ~60s melody) by zeroing one gain
+// node, rather than needing to track and stop every individual
+// oscillator/buffer source in flight. getAudioContext() always creates
+// masterGain alongside audioContext, so it's never null once called.
+function getMasterGain(): GainNode {
+  getAudioContext();
+  return masterGain as GainNode;
+}
+
 function withAudioContext(run: (context: AudioContext) => void) {
   try {
     run(getAudioContext());
   } catch {
     // Web Audio isn't available in this browser - stay silent rather than throwing.
   }
+}
+
+export function isMuted(): boolean {
+  return muted;
+}
+
+export function setMuted(value: boolean): void {
+  muted = value;
+
+  try {
+    window.localStorage.setItem(MUTE_STORAGE_KEY, value ? "1" : "0");
+  } catch {
+    // Storage unavailable (private browsing, etc.) - mute still works for this session.
+  }
+
+  if (masterGain) {
+    masterGain.gain.value = value ? 0 : 1;
+  }
+
+  for (const audio of Object.values(activeAudioElements)) {
+    if (audio) {
+      audio.muted = value;
+    }
+  }
+}
+
+export function toggleMuted(): boolean {
+  setMuted(!muted);
+  return muted;
 }
 
 function createNoiseBuffer(context: AudioContext, durationSeconds: number) {
@@ -88,7 +144,7 @@ function playNoiseBurst(
 
   source.connect(filter);
   filter.connect(gainNode);
-  gainNode.connect(context.destination);
+  gainNode.connect(getMasterGain());
 
   source.start(startTime);
   source.stop(startTime + duration + 0.02);
@@ -130,7 +186,7 @@ function playPluck(
   fundamental.connect(filter);
   overtone.connect(filter);
   filter.connect(gainNode);
-  gainNode.connect(context.destination);
+  gainNode.connect(getMasterGain());
 
   fundamental.start(startTime);
   overtone.start(startTime);
@@ -168,7 +224,7 @@ function playWhoosh(context: AudioContext, startTime: number) {
   gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.6);
 
   oscillator.connect(gainNode);
-  gainNode.connect(context.destination);
+  gainNode.connect(getMasterGain());
   oscillator.start(startTime);
   oscillator.stop(startTime + 0.65);
 }
@@ -274,7 +330,7 @@ function playMelodyNote(
     gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     oscillator.connect(gainNode);
-    gainNode.connect(context.destination);
+    gainNode.connect(getMasterGain());
     oscillator.start(startTime);
     oscillator.stop(startTime + duration);
   });
@@ -297,7 +353,7 @@ function playBassNote(
   gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
   oscillator.connect(gainNode);
-  gainNode.connect(context.destination);
+  gainNode.connect(getMasterGain());
   oscillator.start(startTime);
   oscillator.stop(startTime + duration);
 }
@@ -342,6 +398,10 @@ const SYNTH_FALLBACKS: Record<SoundCue, () => void> = {
 const activeAudioElements: Partial<Record<SoundCue, HTMLAudioElement>> = {};
 
 export function playSound(cue: SoundCue) {
+  if (muted) {
+    return;
+  }
+
   try {
     const audio = new Audio(SOUND_FILES[cue]);
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { playSound, type SoundCue } from "../lib/sound";
+import { isMuted, playSound, toggleMuted, type SoundCue } from "../lib/sound";
 import { BalloonGraphic } from "../lib/stickerGraphics";
 
 type EnvelopeRevealProps = {
@@ -151,11 +151,41 @@ const BALLOON_PIECES: BalloonPieceConfig[] = [
   { left: "83%", color: BLUSH, stagger: "850ms", drift: "14px", tilt: "5deg", scale: 0.84, duration: "2.4s" },
 ];
 
+function SpeakerIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M4 9.5v5h3.2L12 18.5v-13L7.2 9.5H4Z" fill="currentColor" />
+      {muted ? (
+        <path
+          d="M15.5 9.5l5 5m0-5l-5 5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          fill="none"
+        />
+      ) : (
+        <path
+          d="M15.8 8.5a5 5 0 0 1 0 7M18.3 6a8.5 8.5 0 0 1 0 12"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          fill="none"
+        />
+      )}
+    </svg>
+  );
+}
+
 export default function EnvelopeReveal({
   recipientName,
   children,
 }: EnvelopeRevealProps) {
   const [phase, setPhase] = useState<RevealPhase>("arrival");
+  const [muted, setMutedState] = useState(() => isMuted());
+
+  function handleToggleMute() {
+    setMutedState(toggleMuted());
+  }
 
   // Tracks every in-flight setTimeout from the current sequence so a replay
   // can cancel anything still pending from the previous one instead of
@@ -230,6 +260,15 @@ export default function EnvelopeReveal({
   return (
     <div className="envelope-reveal-wrapper" {...reachedAttributes}>
       <div className={`envelope-reveal envelope-reveal--${phase}`}>
+        <button
+          type="button"
+          className="mute-toggle-button"
+          onClick={handleToggleMute}
+          aria-pressed={muted}
+          aria-label={muted ? "Unmute sound" : "Mute sound"}
+        >
+          <SpeakerIcon muted={muted} />
+        </button>
         <div className="arrival-particles" aria-hidden="true">
           <span className="arrival-particle arrival-particle--one" />
           <span className="arrival-particle arrival-particle--two" />
@@ -304,9 +343,6 @@ export default function EnvelopeReveal({
             </span>
           ))}
         </div>
-      </div>
-      <div className="finale-text" aria-hidden="true">
-        <span>Happy Birthday, {recipientName}!</span>
       </div>
       {hasReachedPhase(phase, "ending") && (
         <button
