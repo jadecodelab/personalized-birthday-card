@@ -214,12 +214,14 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
             </span>
           </div>
         )}
-        <div className="card-copy">
-          <p className="birthday-line">Celebrating {previewBirthday}</p>
-          <p>Dear {previewName},</p>
-          <h2>{message.headline}</h2>
-          <p>{message.body}</p>
-        </div>
+        {templateId !== "keepsake" && (
+          <div className="card-copy">
+            <p className="birthday-line">Celebrating {previewBirthday}</p>
+            <p>Dear {previewName},</p>
+            <h2>{message.headline}</h2>
+            <p>{message.body}</p>
+          </div>
+        )}
       </div>
     );
   },

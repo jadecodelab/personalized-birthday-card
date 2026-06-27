@@ -462,6 +462,10 @@ textarea {
   background: linear-gradient(135deg, #f3e9dc 0 45%, #c98a73 46% 72%, #8a6a52 73%);
 }
 
+.template-swatch--keepsake {
+  background: linear-gradient(135deg, #f7f0e6 0 45%, #c9a877 46% 72%, #5c4636 73%);
+}
+
 .sticker-picker {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
@@ -1767,6 +1771,46 @@ textarea {
   display: block;
 }
 
+/* inspirations/template5.jpg used as-is for the background art (headline,
+   wish, signoff, polaroid frame, tape, and flowers are all baked into the
+   image's pixels, not redrawn in CSS) - the only thing this template adds
+   on top is the shared photo-upload slot, positioned to land inside the
+   image's blank photo square. aspect-ratio matches the image's native
+   736x1104 (2:3) so it isn't stretched or cropped; every other template
+   uses the app's standard 9:16. */
+.card-preview--keepsake {
+  aspect-ratio: 2 / 3;
+  display: block;
+  padding: 0;
+  background: url("/templates/keepsake-bg.jpg") center / cover no-repeat;
+}
+
+/* Sized/positioned (in cardData.ts's defaultMovableLayouts.keepsake) to
+   match the blank gray square in keepsake-bg.jpg - no border/shadow of our
+   own since the picture's white polaroid border is already part of the
+   image underneath. */
+.card-preview--keepsake .photo-placeholder {
+  width: 57%;
+  height: 38%;
+  min-height: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.card-preview--keepsake .photo-placeholder span {
+  display: none;
+}
+
+/* No party-stickers/sticker confetti or cake/flowers/balloons/gift - the
+   reference art already has its own decoration baked in. */
+.card-preview--keepsake .party-stickers,
+.card-preview--keepsake .card-graphic {
+  display: none;
+}
+
 .card-preview--boho .card-copy {
   grid-row: 2;
   max-width: none;
@@ -2104,6 +2148,16 @@ textarea {
   height: var(--photo-size);
 }
 
+/* Overrides the shared rule above with the percentage sizing that lines up
+   with keepsake-bg.jpg's blank photo square, rather than --photo-size
+   (which assumes the old grid/media-row layout this template no longer
+   uses). */
+.card-preview.card-preview--keepsake .photo-placeholder.movable-card-item {
+  width: 57%;
+  height: 38%;
+  margin: 0;
+}
+
 .movable-card-item:hover {
   outline: 2px dashed rgb(255 255 255 / 0.72);
   outline-offset: 5px;
@@ -2424,6 +2478,7 @@ textarea {
     font-size: clamp(2.1rem, 11vw, 2.6rem);
     line-height: 1;
   }
+
 }
 
 @media (max-width: 420px) {
