@@ -1276,9 +1276,11 @@ textarea {
     opacity: 1;
     /* translate comes first so its distance is a fixed pixel amount, not
        scaled down for the smaller-scale balloons - scale() afterwards
-       would shrink the rise distance along with the balloon's size,
-       leaving the smaller pieces short of clearing the card-copy box. */
-    transform: translate(var(--balloon-drift), -520%) scale(var(--balloon-scale))
+       would shrink the rise distance along with the balloon's size.
+       -1080% (up from an earlier -520%, which only cleared the card-copy
+       box and left them stalled mid-card) carries them up near the top of
+       the card instead. */
+    transform: translate(var(--balloon-drift), -1080%) scale(var(--balloon-scale))
       rotate(var(--balloon-tilt));
   }
 }
