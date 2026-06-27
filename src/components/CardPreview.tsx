@@ -10,7 +10,11 @@ import type {
   ResizeCorner,
   TemplateMovableLayout,
 } from "../lib/cardData";
-import { stickerGraphicContent, stickerGraphicViewBox } from "../lib/stickerGraphics";
+import {
+  BohoFloralGraphic,
+  stickerGraphicContent,
+  stickerGraphicViewBox,
+} from "../lib/stickerGraphics";
 
 const STICKER_ARIA_LABEL: Record<"cake" | "flowers" | "balloons" | "gift", string> = {
   cake: "Birthday cake sticker",
@@ -200,6 +204,16 @@ const CardPreview = forwardRef<HTMLDivElement, CardPreviewProps>(
             </div>
           )}
         </div>
+        {templateId === "boho" && (
+          <div className="boho-florals" aria-hidden="true">
+            <span className="boho-floral boho-floral--one">
+              <BohoFloralGraphic />
+            </span>
+            <span className="boho-floral boho-floral--two">
+              <BohoFloralGraphic />
+            </span>
+          </div>
+        )}
         <div className="card-copy">
           <p className="birthday-line">Celebrating {previewBirthday}</p>
           <p>Dear {previewName},</p>

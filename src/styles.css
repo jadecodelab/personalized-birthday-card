@@ -458,6 +458,10 @@ textarea {
   background: linear-gradient(135deg, #eefcf8 0 45%, #4d9de0 46% 72%, #ec4e7a 73%);
 }
 
+.template-swatch--boho {
+  background: linear-gradient(135deg, #f3e9dc 0 45%, #c98a73 46% 72%, #8a6a52 73%);
+}
+
 .sticker-picker {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
@@ -1656,6 +1660,134 @@ textarea {
   display: none;
 }
 
+.card-preview--boho {
+  --card-surface: #f3e9dc;
+  --card-ink: #54392c;
+  --card-muted: #8a7263;
+  --tag-surface: #b98a6a;
+  --photo-a: #e7d9c8;
+  --photo-b: #cdb29a;
+  --photo-border: #ffffff;
+  --sticker-a: #d9a98c;
+  --sticker-b: #c97b6f;
+  --sticker-c: #a98f6f;
+  grid-template-rows: var(--media-height) minmax(0, 1fr);
+  gap: 18px;
+  padding: 30px 28px 40px;
+  background:
+    radial-gradient(circle at 12% 14%, rgb(255 255 255 / 0.5) 0 3%, transparent 3.4%),
+    radial-gradient(circle at 88% 70%, rgb(255 255 255 / 0.4) 0 2.6%, transparent 3%),
+    linear-gradient(165deg, rgb(255 255 255 / 0.55), transparent 46%),
+    var(--card-surface);
+}
+
+/* A thin inset ring (rather than a taped-on strip) reads as a deliberate
+   frame around the photo instead of a scrap stuck to the card. */
+.card-preview--boho .photo-placeholder {
+  width: var(--photo-size);
+  height: var(--photo-size);
+  min-height: 0;
+  justify-self: center;
+  align-self: center;
+  margin: 0;
+  background: #ffffff;
+  border-width: 14px;
+  border-bottom-width: 34px;
+  border-radius: 2px;
+  box-shadow:
+    0 18px 38px rgb(84 57 44 / 0.22),
+    inset 0 0 0 3px var(--tag-surface);
+  transform: rotate(-2deg);
+}
+
+/* The stock sticker art is flat-cartoon colored; muting it toward sepia
+   keeps cake/balloons/gift from clashing with the dusty palette instead of
+   having to hide them outright like the other templates do. The cartoon
+   "flowers" sticker is hidden outright since the boho florals below replace
+   it thematically. */
+.card-preview--boho .card-graphic {
+  filter: sepia(0.35) saturate(0.55) brightness(1.08) hue-rotate(-6deg);
+}
+
+.card-preview--boho .card-graphic--cake {
+  width: 76px;
+  left: 22px;
+  top: auto;
+  bottom: 30px;
+  transform: rotate(-8deg);
+}
+
+.card-preview--boho .card-graphic--flowers {
+  display: none;
+}
+
+.card-preview--boho .card-graphic--balloons {
+  width: 84px;
+  right: 22px;
+  top: auto;
+  bottom: 108px;
+  transform: rotate(6deg);
+}
+
+.card-preview--boho .card-graphic--gift {
+  width: 78px;
+  left: 20px;
+  top: 34px;
+  transform: rotate(-10deg);
+}
+
+.boho-florals {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.boho-floral {
+  position: absolute;
+  display: block;
+  width: 62px;
+}
+
+.boho-floral--one {
+  left: 14px;
+  top: 18px;
+  transform: rotate(-14deg);
+}
+
+.boho-floral--two {
+  right: 16px;
+  bottom: 60px;
+  transform: rotate(18deg) scaleX(-1);
+}
+
+.boho-floral-graphic {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.card-preview--boho .card-copy {
+  grid-row: 2;
+  max-width: none;
+  padding: 22px 24px;
+  background: rgb(255 255 255 / 0.55);
+  border: 1px dashed rgb(84 57 44 / 0.25);
+  border-radius: 4px;
+  box-shadow: 0 14px 30px rgb(84 57 44 / 0.12);
+}
+
+.card-preview--boho .card-copy h2 {
+  font-family: "Mrs Saint Delafield", cursive;
+  font-size: 3.4rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.card-preview--boho .card-copy p {
+  font-style: italic;
+}
+
 .party-stickers {
   position: absolute;
   inset: 0;
@@ -1925,6 +2057,22 @@ textarea {
   --item-rotation: 7deg;
 }
 
+.card-preview--boho .photo-placeholder {
+  --item-rotation: -2deg;
+}
+
+.card-preview--boho .card-graphic--cake {
+  --item-rotation: -8deg;
+}
+
+.card-preview--boho .card-graphic--balloons {
+  --item-rotation: 6deg;
+}
+
+.card-preview--boho .card-graphic--gift {
+  --item-rotation: -10deg;
+}
+
 .card-preview .movable-card-item {
   position: absolute;
   z-index: 2;
@@ -1951,7 +2099,8 @@ textarea {
   margin: 0;
 }
 
-.card-preview.card-preview--photo .photo-placeholder.movable-card-item {
+.card-preview.card-preview--photo .photo-placeholder.movable-card-item,
+.card-preview.card-preview--boho .photo-placeholder.movable-card-item {
   height: var(--photo-size);
 }
 
@@ -2248,13 +2397,32 @@ textarea {
 
   .card-preview--elegant .card-copy,
   .card-preview--bold .card-copy,
-  .card-preview--photo .card-copy {
+  .card-preview--photo .card-copy,
+  .card-preview--boho .card-copy {
     padding: 16px;
   }
 
   .card-preview--bold .card-copy h2 {
     font-size: clamp(1.25rem, 6.4vw, 1.58rem);
     line-height: 0.98;
+  }
+
+  .card-preview--boho .photo-placeholder {
+    width: var(--photo-size);
+    height: var(--photo-size);
+    min-height: 0;
+  }
+
+  .card-preview--boho .card-graphic--cake,
+  .card-preview--boho .card-graphic--flowers,
+  .card-preview--boho .card-graphic--balloons,
+  .card-preview--boho .card-graphic--gift {
+    width: 64px;
+  }
+
+  .card-preview--boho .card-copy h2 {
+    font-size: clamp(2.1rem, 11vw, 2.6rem);
+    line-height: 1;
   }
 }
 

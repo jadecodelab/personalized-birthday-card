@@ -31,6 +31,32 @@ export function BalloonGraphic({ color }: { color: string }) {
   );
 }
 
+// A dried-flower sprig for the Boho template's corner accents - flat shapes
+// in the same style as the stickers below, just in the template's own dusty
+// rust/sage/cream tones rather than the bright cartoon palette, and rendered
+// as a fixed decoration (CardPreview, not the draggable sticker system)
+// since it's specific to one template's mood rather than a content choice.
+export function BohoFloralGraphic() {
+  return (
+    <svg className="boho-floral-graphic" viewBox="0 0 90 150" aria-hidden="true">
+      <path
+        d="M45 146C45 104 40 68 49 24"
+        fill="none"
+        stroke="#9c8568"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path d="M45 112c-15-3-24-13-26-28 15 1 24 12 26 28z" fill="#a98f6f" />
+      <path d="M49 90c15-5 22-15 23-29-15 1-22 13-23 29z" fill="#c9b48f" />
+      <circle cx="49" cy="34" r="11" fill="#d9a98c" />
+      <circle cx="64" cy="44" r="8" fill="#e3c2a8" />
+      <circle cx="34" cy="42" r="8" fill="#c97b6f" />
+      <circle cx="49" cy="54" r="8" fill="#e3c2a8" />
+      <circle cx="49" cy="38" r="6" fill="#f3e9dc" />
+    </svg>
+  );
+}
+
 export const stickerGraphicContent: Record<string, ReactNode> = {
   cake: (
     <>

@@ -39,6 +39,7 @@ export const cardTemplates = [
   { id: "playful", label: "Confetti" },
   { id: "bold", label: "Pop Art" },
   { id: "photo", label: "Photo Fun" },
+  { id: "boho", label: "Boho" },
 ] as const;
 
 export type CardTemplateId = (typeof cardTemplates)[number]["id"];
@@ -90,6 +91,13 @@ export const defaultMovableLayouts: Record<CardTemplateId, TemplateMovableLayout
     gift: { x: 35, y: 16 },
     photo: { x: 60, y: 26 },
   },
+  boho: {
+    cake: { x: 18, y: 76 },
+    flowers: { x: 86, y: 18 },
+    balloons: { x: 84, y: 74 },
+    gift: { x: 16, y: 20 },
+    photo: { x: 50, y: 27 },
+  },
 };
 
 export const defaultPhotoScales: Record<CardTemplateId, number> = {
@@ -97,6 +105,7 @@ export const defaultPhotoScales: Record<CardTemplateId, number> = {
   playful: 100,
   bold: 100,
   photo: 100,
+  boho: 100,
 };
 
 export function formatBirthdayDate(monthIndex: number, day: number) {
