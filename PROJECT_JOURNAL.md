@@ -705,6 +705,71 @@ How I tested it:
 
 Related commit: `feat: add sourced audio files for the celebration sequence`
 
+### June 27, 2026: Stop Overlapping Replay Audio
+
+Testing turned up a real bug in the redesigned reveal sequence: tapping "Watch it open again" started the whole sequence over while whatever was still playing from the first run kept going underneath it - and since the replay button only appears once the closing melody phase has already started, the worst possible moment to retrigger sound is also the only moment the button is tappable. I also asked for audio to stop whenever the card isn't actually the thing on screen, not just on replay.
+
+What changed:
+
+- A new `stopAllSounds()` in `sound.ts`. File-based cues get paused and rewound directly; the synthesized fallback's oscillators and buffer sources don't have individual stop handles, so it silences those by disconnecting the shared `masterGain` node and swapping in a fresh one for anything played afterward.
+- Called on replay, before the sequence restarts.
+- Called on unmount, which covers both closing the builder's "preview as recipient" overlay and navigating away from a real card link.
+- Called on `visibilitychange` (tab backgrounded, or a new tab taking focus) and separately on `pagehide` (the tab or browser actually closing) - two different signals because some browsers don't reliably fire `visibilitychange` before a close.
+
+What I learned:
+
+- A bug's trigger condition can be exactly the thing that makes it inevitable rather than occasional - here, the only state in which "replay" is clickable is also the one state in which something long (the melody) is guaranteed to still be playing.
+- Audio is one of the few things in this app I can't verify by reading code or a screenshot - confirming the fix meant actually listening through each scenario (replay mid-melody, switching tabs mid-melody, closing the preview overlay, closing the tab) rather than trusting that the logic looked right.
+
+How I tested it:
+
+- Ran the dev server and manually walked through each scenario by ear: replaying while the melody was audible, switching tabs and back, closing the recipient-preview overlay, and closing the tab outright.
+
+Related commit: `fix: stop overlapping audio on replay and when the preview isn't active`
+
+### June 27, 2026: Two New Templates From Pinterest Inspiration
+
+I'd found a few Pinterest scrapbook/journal-style mood boards I liked and saved them as reference images in `inspirations/`. Two of them showed a multi-photo collage layout; I decided not to chase that, since this app's data model only supports one uploaded photo per card - replicating a collage would mean adding multi-photo upload, a separate and bigger feature, not something to quietly wedge into "add a template."
+
+Before writing any code, I had Claude lay out the concrete plan (which references to build from, font choice, naming) and asked me to choose between options rather than just picking for me. I also started the actual implementation on its own branch (`feature/boho-template`) rather than `main`, specifically so the existing four templates stayed untouched if the new ones didn't work out.
+
+**Boho** came together in one pass: a fifth template built the same way the existing four are - new CSS variables for a cream/rust/sage palette, a new Google Font (Mrs Saint Delafield) for a cursive headline, and new dried-flower SVG accents in the corners. The photo got a thin frame instead of the washi-tape treatment I tried first and didn't like, and the stock cake/balloon/gift stickers got muted toward sepia rather than hidden outright, so they still feel optional rather than removed.
+
+**Keepsake** took three tries to land. First pass: recreate one specific reference image's exact layout in CSS - headline above the photo, signoff below, a structure none of the other five templates use. Second pass, after I said I didn't want the personalized message at all: dropped the dynamic headline/body and hardcoded wording matching the picture instead, keeping only the photo dynamic. Third pass, after I said not to "generate" it at all: stop recreating the image in CSS and just use the actual reference JPG as the card's real background (shipped from `public/templates/`), with the existing photo-upload slot positioned on top to land inside the picture's blank photo square. That also meant giving this one template alone a 2:3 aspect ratio matching the image's real dimensions, instead of the 9:16 every other template uses.
+
+What I learned:
+
+- "Make it look like this image" turned out to have at least three different valid readings - the mood, the exact layout, or literally the file - and the cheapest way to find the right one was iterating in small reversible steps rather than guessing once and committing hard to it.
+- Working in a throwaway branch before writing speculative/visual code is worth the two extra commands - this was the first time in the project a feature might genuinely not have worked out, and having `main` untouched the whole time meant there was nothing to undo if it hadn't.
+- A template doesn't have to share an architecture with the others to fit into the same picker - Keepsake (a static image with one positioned upload slot) sits next to five CSS/SVG-built templates just fine, since the only real contract a template has to honor is plugging into the same shared photo-upload system, not how the rest of its visuals are built.
+
+How I tested it:
+
+- Ran the dev server after each pass and visually compared the live preview against the saved reference images, since this was fundamentally a "does this look right" question that reading the CSS alone couldn't answer.
+- Checked that the photo-upload step still worked normally on both new templates, since Keepsake's background-image approach is different enough from the other templates that the shared upload/drag/resize system needed separate confirmation it still applied.
+
+Related commits: `feat: add a Boho card template`, `feat: add a Keepsake card template using a real reference image`
+
+### June 27, 2026: Balloons Reach the Top, Slower and Bigger
+
+A short tuning pass on the balloon-rise animation from the cinematic reveal redesign. The rise distance had been calibrated to just clear the card-copy box, which in practice read as the balloons stalling in the middle of the card instead of blowing up past it.
+
+What changed:
+
+- Raised the rise's translate distance from -520% to -1080%, in two steps - checking visually after the first increase before pushing it further on "a little bit higher" feedback - so the balloons now reach near the top of the card instead of stopping mid-card.
+- Slowed the rise duration by roughly 75% (from ~2.3-2.7s to ~4.1-4.8s) for a more deliberate final beat instead of a quick pop.
+- Scaled the balloons up 30% via `transform: scale()` rather than changing their base box size.
+
+What I learned:
+
+- The rise distance and the visual size are both ultimately expressed as percentages/transforms of the same underlying box, so they're coupled unless you're careful - growing the box itself to make the balloons bigger would have silently changed the rise math too, which is why the size increase went through `scale()` instead.
+
+How I tested it:
+
+- Used the dev server's hot reload to check each of the three adjustments (higher, slower, bigger) visually right after making it, rather than batching all three sight-unseen.
+
+Related commit: `feat: send the celebration balloons higher, slower, and bigger`
+
 ## What I Learned So Far
 
 This project helped me practice more than React syntax. It helped me practice product thinking.
