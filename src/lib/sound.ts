@@ -90,6 +90,31 @@ export function toggleMuted(): boolean {
   return muted;
 }
 
+// Stops anything currently audible: pauses/rewinds every tracked file-based
+// cue, and - since synthesized cues are made of oscillators/buffer sources
+// with no individual handles to call .stop() on - cuts them off by swapping
+// in a fresh masterGain disconnected from the old one, rather than the
+// destination. Anything already scheduled keeps running silently into the
+// detached old node instead of leaking into the new mix.
+export function stopAllSounds(): void {
+  for (const cue of Object.keys(activeAudioElements) as SoundCue[]) {
+    const audio = activeAudioElements[cue];
+
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      delete activeAudioElements[cue];
+    }
+  }
+
+  if (audioContext && masterGain) {
+    masterGain.disconnect();
+    masterGain = audioContext.createGain();
+    masterGain.gain.value = muted ? 0 : 1;
+    masterGain.connect(audioContext.destination);
+  }
+}
+
 function createNoiseBuffer(context: AudioContext, durationSeconds: number) {
   const buffer = context.createBuffer(
     1,

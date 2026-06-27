@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { isMuted, playSound, toggleMuted, type SoundCue } from "../lib/sound";
+import { isMuted, playSound, stopAllSounds, toggleMuted, type SoundCue } from "../lib/sound";
 import { BalloonGraphic } from "../lib/stickerGraphics";
 
 type EnvelopeRevealProps = {
@@ -195,6 +195,34 @@ export default function EnvelopeReveal({
   useEffect(() => {
     return () => {
       pendingTimeoutIds.current.forEach((id) => window.clearTimeout(id));
+      // Covers both unmount paths: navigating away from a card link and
+      // closing the "preview as recipient" overlay in the builder - in
+      // either case this envelope is no longer the active preview, so
+      // anything still playing (e.g. mid-melody) shouldn't keep going.
+      stopAllSounds();
+    };
+  }, []);
+
+  // A backgrounded tab, a new tab taking focus, or the tab/browser closing
+  // are all "not the active preview" - stop audio rather than let a ~60s
+  // melody keep playing to nobody. visibilitychange covers focus changes;
+  // pagehide is the reliable signal for the tab/browser actually closing or
+  // navigating away (including cases - e.g. Safari/mobile - where
+  // visibilitychange doesn't fire in time, or the page is going into the
+  // back/forward cache).
+  useEffect(() => {
+    function handleStopOnHide() {
+      if (document.hidden) {
+        stopAllSounds();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleStopOnHide);
+    window.addEventListener("pagehide", stopAllSounds);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleStopOnHide);
+      window.removeEventListener("pagehide", stopAllSounds);
     };
   }, []);
 
@@ -242,6 +270,10 @@ export default function EnvelopeReveal({
   // phase-triggered animations never restart, since their trigger never
   // visibly toggled off.
   function handleReplay() {
+    // Without this, whatever's still audible from the previous run (most
+    // likely the ~60s melody, since the replay button only appears once
+    // "ending" has been reached) plays on top of the new sequence's sounds.
+    stopAllSounds();
     clearPendingTimeouts();
     setPhase("arrival");
     window.requestAnimationFrame(() => {
