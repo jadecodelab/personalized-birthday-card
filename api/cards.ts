@@ -32,7 +32,7 @@ const UPSTASH_TOKEN = stripWrappingQuotes(process.env.UPSTASH_REDIS_REST_TOKEN);
 
 const RATE_LIMIT_PER_MINUTE = 10;
 const MAX_PAYLOAD_LENGTH = 400_000;
-const KNOWN_TEMPLATE_IDS = ["elegant", "playful", "bold", "photo"];
+const KNOWN_TEMPLATE_IDS = ["elegant", "playful", "bold", "photo", "boho", "keepsake"];
 const ID_ALPHABET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
